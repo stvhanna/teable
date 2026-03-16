@@ -1,17 +1,7 @@
 import type { ISnapshotBase } from '@teable/core';
 import type { CreateOp, DB, DeleteOp, EditOp } from 'sharedb';
-export interface IAdapterService {
-  create(collectionId: string, snapshot: unknown): Promise<void>;
 
-  del(version: number, collectionId: string, docId: string): Promise<void>;
-
-  update(
-    version: number,
-    collectionId: string,
-    docId: string,
-    opContexts: unknown[]
-  ): Promise<void>;
-
+export interface IReadonlyAdapterService {
   getSnapshotBulk(
     collectionId: string,
     ids: string[],
@@ -23,6 +13,32 @@ export interface IAdapterService {
     collectionId: string,
     query: unknown
   ): Promise<{ ids: string[]; extra?: unknown }>;
+}
+
+export interface IShareDbReadonlyAdapterService extends IReadonlyAdapterService {
+  // get current version and type of the document
+  getVersionAndType(
+    collectionId: string,
+    docId: string
+  ): Promise<{ version: number; type: RawOpType }>;
+
+  getVersionAndTypeMap(
+    collectionId: string,
+    docIds: string[]
+  ): Promise<Record<string, { version: number; type: RawOpType }>>;
+}
+
+export interface IAdapterService {
+  create(collectionId: string, snapshot: unknown): Promise<void>;
+
+  del(version: number, collectionId: string, docId: string): Promise<void>;
+
+  update(
+    version: number,
+    collectionId: string,
+    docId: string,
+    opContexts: unknown[]
+  ): Promise<void>;
 }
 
 export interface IShareDbConfig {

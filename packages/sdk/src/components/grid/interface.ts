@@ -36,17 +36,21 @@ export enum SelectionRegionType {
 export enum RegionType {
   Cell = 'Cell',
   ActiveCell = 'ActiveCell',
+  CellValue = 'CellValue',
   AppendRow = 'AppendRow',
   AppendColumn = 'AppendColumn',
   ColumnHeader = 'ColumnHeader',
+  GroupStatistic = 'GroupStatistic',
   ColumnStatistic = 'ColumnStatistic',
   ColumnHeaderMenu = 'ColumnHeaderMenu',
+  ColumnPrimaryIcon = 'ColumnPrimaryIcon',
   ColumnDescription = 'ColumnDescription',
   ColumnResizeHandler = 'ColumnResizeHandler',
   ColumnFreezeHandler = 'ColumnFreezeHandler',
   RowHeaderDragHandler = 'RowHeaderDragHandler',
   RowHeaderExpandHandler = 'RowHeaderExpandHandler',
   RowHeaderCheckbox = 'RowHeaderCheckbox',
+  RowGroupControl = 'RowGroupControl',
   RowGroupHeader = 'RowGroupHeader',
   RowCountLabel = 'RowCountLabel',
   RowHeader = 'RowHeader',
@@ -84,6 +88,10 @@ export interface IGridColumn {
   readonly?: boolean;
   isPrimary?: boolean;
   description?: string;
+  statisticLabel?: {
+    showAlways: boolean;
+    label: string;
+  };
   customTheme?: Partial<IGridTheme>;
 }
 
@@ -134,7 +142,8 @@ export interface IRowControlItem {
 export type ICellItem = [colIndex: number, rowIndex: number];
 
 export type ICollaborator = {
-  activeCell: ICellItem;
+  activeCell?: ICellItem;
+  activeCellId: [recordId: string, field: string];
   user: Omit<IUser, 'phone'>;
   borderColor: string;
   timeStamp: number;
@@ -187,6 +196,7 @@ export interface IGroupHeaderPoint {
   type: LinearRowType.Group;
   depth: number;
   value?: unknown;
+  isCollapsed?: boolean;
 }
 
 export interface IGroupRowPoint {
@@ -223,4 +233,17 @@ export type ILinearRow =
 export interface IGroupCollection {
   groupColumns: IGridColumn[];
   getGroupCell: (cellValue: unknown, depth: number) => ICell;
+}
+
+export interface IColumnLoading {
+  index: number;
+  progress: number;
+  onCancel?: () => void;
+}
+
+export interface ICellError {
+  cellItem: ICellItem;
+  errorMsg: string;
+  onRetry?: () => void;
+  onDismiss?: () => void;
 }

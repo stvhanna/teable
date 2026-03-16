@@ -3,12 +3,56 @@ import { SortFunctionSqlite } from '../sort-query.function';
 
 export class MultipleJsonSortAdapter extends SortFunctionSqlite {
   asc(builderClient: Knex.QueryBuilder): Knex.QueryBuilder {
-    builderClient.orderByRaw(`json_extract(??, '$[0]') ASC NULLS FIRST`, [this.columnName]);
+    if (!this.columnName) {
+      return builderClient;
+    }
+    builderClient.orderByRaw(
+      `
+      json_extract(${this.columnName}, '$[0]') ASC NULLS FIRST,
+      json_array_length${this.columnName} ASC NULLS FIRST
+      `
+    );
     return builderClient;
   }
 
   desc(builderClient: Knex.QueryBuilder): Knex.QueryBuilder {
-    builderClient.orderByRaw(`json_extract(??, '$[0]') DESC NULLS LAST`, [this.columnName]);
+    if (!this.columnName) {
+      return builderClient;
+    }
+    builderClient.orderByRaw(
+      `
+      json_extract(${this.columnName}, '$[0]') DESC NULLS LAST,
+      json_array_length(${this.columnName}) DESC NULLS LAST
+      `
+    );
     return builderClient;
+  }
+
+  getAscSQL() {
+    if (!this.columnName) {
+      return undefined;
+    }
+    return this.knex
+      .raw(
+        `
+        json_extract(${this.columnName}, '$[0]') ASC NULLS FIRST,
+        json_array_length(${this.columnName}) ASC NULLS FIRST
+        `
+      )
+      .toQuery();
+  }
+
+  getDescSQL() {
+    if (!this.columnName) {
+      return undefined;
+    }
+    return this.knex
+      .raw(
+        `
+        json_extract(${this.columnName}, '$[0]') DESC NULLS LAST,
+        json_array_length(${this.columnName}) DESC NULLS LAST
+        `
+      )
+      .toQuery();
   }
 }

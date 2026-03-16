@@ -1,23 +1,28 @@
-import { FieldKeyType } from '@teable/core';
-import { Trash, Copy, ArrowUp, ArrowDown } from '@teable/icons';
-import { deleteRecords } from '@teable/openapi';
-import { SelectionRegionType } from '@teable/sdk/components';
-import { useTableId, useTablePermission, useViewId } from '@teable/sdk/hooks';
-import { Record } from '@teable/sdk/model';
+import { History, Trash2, ArrowUp, ArrowDown, Copy, Link, MessageSquare } from '@teable/icons';
+import { useGridViewStore } from '@teable/sdk/components';
+import { useTableId, useTablePermission, useView } from '@teable/sdk/hooks';
 import {
+  cn,
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
   CommandSeparator,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+  Input,
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from '@teable/ui-lib/shadcn';
-import classNames from 'classnames';
-import { useTranslation } from 'next-i18next';
-import { Fragment, useRef } from 'react';
+import { noop } from 'lodash';
+import { useTranslation, Trans } from 'next-i18next';
+import { Fragment, useCallback, useRef, useState } from 'react';
 import { useClickAway } from 'react-use';
 import { tableConfig } from '@/features/i18n/table.config';
-import { useSelectionOperation } from '../hooks/useSelectionOperation';
-import { useGridViewStore } from '../store/gridView';
 
 export interface IMenuItemProps<T> {
   type: T;
@@ -26,39 +31,117 @@ export interface IMenuItemProps<T> {
   hidden?: boolean;
   disabled?: boolean;
   className?: string;
+  render?: React.ReactNode;
   onClick: () => void;
+}
+
+interface InsertRecordRender {
+  onClick: (num: number) => void;
+  icon: React.ReactElement;
+  type: MenuItemType.InsertAbove | MenuItemType.InsertBelow;
 }
 
 enum MenuItemType {
   Copy = 'Copy',
+  CopyLink = 'CopyLink',
   Delete = 'Delete',
   InsertAbove = 'InsertAbove',
   InsertBelow = 'InsertBelow',
+  Duplicate = 'Duplicate',
+  ViewHistory = 'ViewHistory',
+  AddComment = 'AddComment',
 }
 
-const iconClassName = 'mr-2 h-4 w-4';
+const iconClassName = 'mr-2 h-4 w-4 shrink-0';
+
+const InsertRecordRender = (props: InsertRecordRender) => {
+  const { onClick, icon, type } = props;
+  const [num, setNumber] = useState(1);
+  const i18nKey =
+    type === MenuItemType.InsertAbove
+      ? 'table:menu.insertRecordAbove'
+      : 'table:menu.insertRecordBelow';
+  return (
+    <Button
+      variant={'ghost'}
+      size="sm"
+      className="size-full h-9 justify-start gap-0 px-4 py-2"
+      onClick={() => {
+        onClick(num);
+      }}
+    >
+      {icon}
+      <div className="flex flex-1 items-center text-sm">
+        <Trans
+          ns={tableConfig.i18nNamespaces}
+          i18nKey={i18nKey}
+          components={{
+            input: (
+              <Input
+                className="mx-1 h-6 w-14"
+                defaultValue={1}
+                onKeyDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  const originValue = Math.abs(Math.round(Number(e.target.value)));
+                  const newValue = isNaN(originValue) ? 1 : originValue;
+                  if (originValue > 1000) {
+                    e.target.value = '1000';
+                    setNumber(1000);
+                    return;
+                  }
+                  setNumber(newValue);
+                }}
+              />
+            ),
+          }}
+        />
+      </div>
+    </Button>
+  );
+};
 
 export const RecordMenu = () => {
-  const { recordMenu, closeRecordMenu, selection } = useGridViewStore();
+  const { recordMenu, closeRecordMenu } = useGridViewStore();
   const { t } = useTranslation(tableConfig.i18nNamespaces);
   const tableId = useTableId();
-  const viewId = useViewId();
+  const view = useView();
+  const viewId = view?.id;
   const permission = useTablePermission();
-  const { copy } = useSelectionOperation();
   const recordMenuRef = useRef<HTMLDivElement>(null);
 
   useClickAway(recordMenuRef, () => {
     closeRecordMenu();
   });
 
+  const insertRecordFn = useCallback(
+    (num: number, position: 'before' | 'after') => {
+      if (!recordMenu) {
+        return null;
+      }
+      const { record, insertRecord } = recordMenu;
+      if (!tableId || !viewId || !record) return;
+      insertRecord?.(record.id, position, num);
+    },
+    [recordMenu, tableId, viewId]
+  );
+
   if (recordMenu == null) return null;
 
-  const { records, neighborRecords, onAfterInsertCallback } = recordMenu;
+  const { record, isMultipleSelected } = recordMenu;
 
-  if (!records?.length) return null;
+  if (!record && !isMultipleSelected) return null;
 
   const visible = Boolean(recordMenu);
   const position = recordMenu?.position;
+  const isAutoSort = Boolean(view?.sort && !view.sort?.manualSort);
   const style = position
     ? {
         left: position.x,
@@ -66,137 +149,202 @@ export const RecordMenu = () => {
       }
     : {};
 
-  const onInsertRecord = async (sort: number) => {
-    if (!tableId || !viewId) return;
-
-    const res = await Record.createRecords(tableId, {
-      fieldKeyType: FieldKeyType.Id,
-      records: [
-        {
-          fields: {},
-          recordOrder: { [viewId]: sort },
-        },
-      ],
-    });
-    const record = res.data.records[0];
-
-    if (record == null || selection == null) return;
-
-    const { type, ranges } = selection;
-
-    if (type === SelectionRegionType.Cells) {
-      return onAfterInsertCallback?.(record.id, ranges[0][1]);
-    }
-    if (type === SelectionRegionType.Rows) {
-      return onAfterInsertCallback?.(record.id, ranges[0][0]);
-    }
-  };
-
   const menuItemGroups: IMenuItemProps<MenuItemType>[][] = [
     [
       {
         type: MenuItemType.InsertAbove,
         name: t('table:menu.insertRecordAbove'),
         icon: <ArrowUp className={iconClassName} />,
-        hidden: records.length !== 1 || !permission['record|create'],
+        hidden: isMultipleSelected || !permission['record|create'],
+        disabled: isAutoSort,
+        render: (
+          <InsertRecordRender
+            onClick={(num: number) => insertRecordFn(num, 'before')}
+            icon={<ArrowUp className={iconClassName} />}
+            type={MenuItemType.InsertAbove}
+          />
+        ),
         onClick: async () => {
-          if (!tableId || !viewId) return;
-          let finalSort;
-          const [aboveRecord] = neighborRecords;
-          const sort = records[0].recordOrder[viewId];
-
-          if (aboveRecord == null) {
-            finalSort = sort - 1;
-          } else {
-            const aboveSort = aboveRecord.recordOrder[viewId];
-            finalSort = (sort + aboveSort) / 2;
-          }
-          await onInsertRecord(finalSort);
+          noop();
         },
       },
       {
         type: MenuItemType.InsertBelow,
         name: t('table:menu.insertRecordBelow'),
         icon: <ArrowDown className={iconClassName} />,
-        hidden: records.length !== 1 || !permission['record|create'],
+        hidden: isMultipleSelected || !permission['record|create'],
+        disabled: isAutoSort,
+        render: (
+          <InsertRecordRender
+            onClick={(num: number) => insertRecordFn(num, 'after')}
+            icon={<ArrowDown className={iconClassName} />}
+            type={MenuItemType.InsertBelow}
+          />
+        ),
         onClick: async () => {
-          if (!tableId || !viewId) return;
-          let finalSort;
-          const [, blewRecord] = neighborRecords;
-          const sort = records[0].recordOrder[viewId];
-
-          if (blewRecord == null) {
-            finalSort = sort + 1;
-          } else {
-            const aboveSort = blewRecord.recordOrder[viewId];
-            finalSort = (sort + aboveSort) / 2;
-          }
-          await onInsertRecord(finalSort);
+          noop();
         },
       },
     ],
     [
       {
-        type: MenuItemType.Copy,
-        name: t('table:menu.copyCells'),
+        type: MenuItemType.Duplicate,
+        name: t('sdk:expandRecord.duplicateRecord'),
         icon: <Copy className={iconClassName} />,
+        hidden: isMultipleSelected || !permission['record|create'],
         onClick: async () => {
-          selection && (await copy(selection));
+          if (tableId && recordMenu?.duplicateRecord) {
+            await recordMenu.duplicateRecord();
+          }
         },
       },
       {
+        type: MenuItemType.CopyLink,
+        name: t('sdk:expandRecord.copyRecordUrl'),
+        icon: <Link className={iconClassName} />,
+        hidden: isMultipleSelected,
+        onClick: async () => {
+          if (tableId && recordMenu?.copyRecordUrl) {
+            await recordMenu.copyRecordUrl();
+          }
+        },
+      },
+    ],
+    [
+      {
+        type: MenuItemType.ViewHistory,
+        name: t('sdk:expandRecord.recordHistory.showRecordHistory'),
+        icon: <History className={iconClassName} />,
+        hidden: isMultipleSelected || !permission['record|update'],
+        onClick: async () => {
+          if (tableId && recordMenu?.viewRecordHistory) {
+            await recordMenu.viewRecordHistory();
+          }
+        },
+      },
+      {
+        type: MenuItemType.AddComment,
+        name: t('sdk:expandRecord.addRecordComment'),
+        icon: <MessageSquare className={iconClassName} />,
+        hidden: isMultipleSelected || !permission['record|comment'],
+        onClick: async () => {
+          if (tableId && recordMenu?.addRecordComment) {
+            await recordMenu.addRecordComment();
+          }
+        },
+      },
+    ],
+    [],
+    [
+      {
         type: MenuItemType.Delete,
-        name:
-          records.length > 1
-            ? t('table:menu.deleteAllSelectedRecords')
-            : t('table:menu.deleteRecord'),
-        icon: <Trash className={iconClassName} />,
-        hidden: !permission['record|delete'],
+        name: isMultipleSelected
+          ? t('table:menu.deleteAllSelectedRecords')
+          : t('table:menu.deleteRecord'),
+        icon: <Trash2 className={iconClassName} />,
+        hidden: !permission['record|delete'] || record?.undeletable,
         className: 'text-red-500 aria-selected:text-red-500',
         onClick: async () => {
-          const recordIds = records.map((r) => r.id);
-          tableId && (await deleteRecords(tableId, recordIds));
+          if (recordMenu && tableId && recordMenu.deleteRecords) {
+            await recordMenu.deleteRecords();
+          }
         },
       },
     ],
   ].map((items) => (items as IMenuItemProps<MenuItemType>[]).filter(({ hidden }) => !hidden));
 
-  return (
-    <Command
-      ref={recordMenuRef}
-      className={classNames('absolute rounded-sm shadow-sm w-60 h-auto border', {
-        hidden: !visible,
-      })}
-      style={style}
-    >
-      <CommandList>
-        {menuItemGroups.map((items, index) => {
-          const nextItems = menuItemGroups[index + 1] ?? [];
-          if (!items.length) return null;
+  if (menuItemGroups.every((menuItemGroup) => menuItemGroup.length === 0)) {
+    return null;
+  }
 
-          return (
-            <Fragment key={index}>
-              <CommandGroup aria-valuetext="name">
-                {items.map(({ type, name, icon, className, onClick }) => (
-                  <CommandItem
-                    className={classNames('px-4 py-2', className)}
-                    key={type}
-                    value={name}
-                    onSelect={async () => {
-                      await onClick();
-                      closeRecordMenu();
-                    }}
-                  >
-                    {icon}
-                    {name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              {nextItems.length > 0 && <CommandSeparator />}
-            </Fragment>
-          );
-        })}
-      </CommandList>
-    </Command>
+  return (
+    <>
+      <Popover open={visible}>
+        <PopoverTrigger asChild style={style} className="absolute">
+          <div className="size-0 opacity-0" />
+        </PopoverTrigger>
+        <PopoverContent
+          className="size-auto min-w-40 rounded-md p-0"
+          align="start"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Command ref={recordMenuRef} className="rounded-md border-none shadow-none" style={style}>
+            <CommandList className="max-h-96">
+              {menuItemGroups.map((items, index) => {
+                const nextItems = menuItemGroups[index + 1] ?? [];
+                const hasNextItems = nextItems.length > 0;
+                if (!items.length) return null;
+
+                return (
+                  <Fragment key={index}>
+                    <CommandGroup aria-valuetext="name">
+                      {items.map(({ type, name, icon, className, disabled, onClick, render }) => {
+                        return (
+                          <CommandItem
+                            className={cn('px-4 py-2', className, {
+                              'px-0 py-0': [
+                                MenuItemType.InsertBelow,
+                                MenuItemType.InsertAbove,
+                              ].includes(type),
+                            })}
+                            key={type}
+                            value={name}
+                            onSelect={async () => {
+                              if (disabled) {
+                                return;
+                              }
+                              await onClick();
+                              closeRecordMenu();
+                            }}
+                          >
+                            {disabled ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger
+                                    className={cn('flex items-center gap-2', {
+                                      'opacity-50': disabled,
+                                    })}
+                                  >
+                                    <div className="pointer-events-none">
+                                      {render ? (
+                                        render
+                                      ) : (
+                                        <>
+                                          {icon}
+                                          {name}
+                                        </>
+                                      )}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent hideWhenDetached={true}>
+                                    {t('table:view.insertToolTip')}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <>
+                                {render ? (
+                                  render
+                                ) : (
+                                  <>
+                                    {icon}
+                                    {name}
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                    {hasNextItems && <CommandSeparator />}
+                  </Fragment>
+                );
+              })}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </>
   );
 };

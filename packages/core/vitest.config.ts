@@ -1,10 +1,18 @@
-import tsconfigPaths from 'vite-tsconfig-paths';
-import { defineConfig } from 'vitest/config';
+import { defineConfig, configDefaults } from 'vitest/config';
 
 const testFiles = ['./src/**/*.{test,spec}.{js,ts}'];
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: {
+    conditions: ['@teable/source'],
+  },
+  ssr: {
+    resolve: {
+      conditions: ['@teable/source'],
+      externalConditions: ['@teable/source'],
+    },
+  },
+  cacheDir: '../../.cache/vitest/core',
   test: {
     globals: true,
     environment: 'node',
@@ -13,25 +21,10 @@ export default defineConfig({
     typecheck: {
       enabled: false,
     },
-    /*
-    deps: {
-      experimentalOptimizer: {
-        enabled: true,
-      },
-    }, */
-    cache: {
-      dir: '../../.cache/vitest/core',
-    },
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
+    pool: 'forks',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'clover'],
-      extension: ['js', 'ts'],
-      all: true,
+      include: ['src/**/*.{js,ts}'],
     },
     // To mimic Jest behaviour regarding mocks.
     // @link https://vitest.dev/config/#clearmocks
@@ -39,11 +32,6 @@ export default defineConfig({
     mockReset: true,
     restoreMocks: true,
     include: testFiles,
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      '**/.next/**',
-      '**/.{idea,git,cache,output,temp}/**',
-    ],
+    exclude: [...configDefaults.exclude, '**/.next/**'],
   },
 });

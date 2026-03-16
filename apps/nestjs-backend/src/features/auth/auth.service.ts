@@ -1,107 +1,77 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { generateUserId } from '@teable/core';
-import { PrismaService } from '@teable/db-main-prisma';
-import type { IChangePasswordRo } from '@teable/openapi';
-import * as bcrypt from 'bcrypt';
+/* eslint-disable sonarjs/no-duplicate-string */
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { type IUserInfoVo, type IUserMeVo } from '@teable/openapi';
+import { omit, pick } from 'lodash';
+import ms from 'ms';
 import { ClsService } from 'nestjs-cls';
 import type { IClsStore } from '../../types/cls';
-import { UserService } from '../user/user.service';
-import { SessionStoreService } from './session/session-store.service';
+import { PermissionService } from './permission.service';
+import { JwtAuthInternalType } from './strategies/types';
+import type { IJwtAuthInternalInfo, IJwtAuthInfo } from './strategies/types';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prismaService: PrismaService,
-    private readonly userService: UserService,
     private readonly cls: ClsService<IClsStore>,
-    private readonly sessionStoreService: SessionStoreService
+    private readonly permissionService: PermissionService,
+    private readonly jwtService: JwtService
   ) {}
 
-  private async encodePassword(password: string) {
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(password, salt);
-    return { salt, hashPassword };
+  async getUserInfo(user: IUserMeVo): Promise<IUserInfoVo> {
+    const res = pick(user, ['id', 'email', 'avatar', 'name']);
+    const accessTokenId = this.cls.get('accessTokenId');
+    if (!accessTokenId) {
+      return res;
+    }
+    const { scopes } = await this.permissionService.getAccessToken(accessTokenId);
+    if (!scopes.includes('user|email_read')) {
+      return omit(res, 'email');
+    }
+    return res;
   }
 
-  private async comparePassword(
-    password: string,
-    hashPassword: string | null,
-    salt: string | null
+  async validateJwtToken(token: string) {
+    try {
+      return await this.jwtService.verifyAsync<IJwtAuthInfo>(token);
+    } catch {
+      throw new UnauthorizedException();
+    }
+  }
+
+  async getTempToken() {
+    const payload: IJwtAuthInfo = {
+      userId: this.cls.get('user.id'),
+    };
+    const expiresIn = '10m';
+    return {
+      accessToken: await this.jwtService.signAsync(payload, { expiresIn }),
+      expiresTime: new Date(Date.now() + ms(expiresIn)).toISOString(),
+    };
+  }
+
+  async getTempInternalToken(
+    baseId: string,
+    type: JwtAuthInternalType,
+    expiresIn: string = '10m',
+    context?: IJwtAuthInternalInfo['context']
   ) {
-    const _hashPassword = await bcrypt.hash(password || '', salt || '');
-    return _hashPassword === hashPassword;
-  }
-
-  async validateUserByEmail(email: string, pass: string) {
-    const user = await this.userService.getUserByEmail(email);
-    if (user) {
-      const { password, salt, ...result } = user;
-      return (await this.comparePassword(pass, password, salt)) ? result : null;
-    }
-    return null;
-  }
-
-  async signup(email: string, password: string) {
-    const user = await this.userService.getUserByEmail(email);
-    if (user) {
-      throw new HttpException(`User ${email} is already registered`, HttpStatus.BAD_REQUEST);
-    }
-    const { salt, hashPassword } = await this.encodePassword(password);
-    return await this.userService.createUser({
-      id: generateUserId(),
-      name: email.split('@')[0],
-      email,
-      salt,
-      password: hashPassword,
-      lastSignTime: new Date().toISOString(),
-    });
-  }
-
-  async signout(req: Express.Request) {
-    await new Promise<void>((resolve, reject) => {
-      req.session.destroy(function (err) {
-        // cannot access session here
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve();
-      });
-    });
-  }
-
-  async changePassword({ password, newPassword }: IChangePasswordRo) {
+    // For User type tokens, userId is required
     const userId = this.cls.get('user.id');
-    const user = await this.userService.getUserById(userId);
-    if (!user) {
-      throw new InternalServerErrorException('User not found');
+    if (type === JwtAuthInternalType.User && !userId) {
+      throw new UnauthorizedException('User identity is required for User type tokens');
     }
-    const { password: currentHashPassword, salt } = user;
-    if (!(await this.comparePassword(password, currentHashPassword, salt))) {
-      throw new BadRequestException('Password is incorrect');
-    }
-    const { salt: newSalt, hashPassword: newHashPassword } = await this.encodePassword(newPassword);
-    await this.prismaService.txClient().user.update({
-      where: { id: userId, deletedTime: null },
-      data: {
-        password: newHashPassword,
-        salt: newSalt,
-      },
-    });
-    // clear session
-    await this.sessionStoreService.clearByUserId(userId);
-  }
 
-  async refreshLastSignTime(userId: string) {
-    await this.prismaService.user.update({
-      where: { id: userId, deletedTime: null },
-      data: { lastSignTime: new Date().toISOString() },
-    });
+    const payload: IJwtAuthInternalInfo = {
+      type,
+      baseId,
+      // Include userId for User type tokens to maintain user identity
+      ...(type === JwtAuthInternalType.User ? { userId } : {}),
+      ...(context ? { context } : {}),
+    };
+    return {
+      accessToken: await this.jwtService.signAsync(payload, { expiresIn }),
+      expiresTime: new Date(Date.now() + ms(expiresIn)).toISOString(),
+    };
   }
 }

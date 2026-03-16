@@ -1,20 +1,45 @@
-import { ChevronDown, ChevronUp, Link, MessageSquare, X } from '@teable/icons';
-import { Button, Separator } from '@teable/ui-lib';
-import classNames from 'classnames';
+import {
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  History,
+  Link,
+  MoreHorizontal,
+  Trash2,
+  X,
+  MessageSquare,
+} from '@teable/icons';
+import {
+  Button,
+  cn,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Separator,
+} from '@teable/ui-lib';
 import { useMeasure } from 'react-use';
 import { useTranslation } from '../../context/app/i18n';
+import { useTablePermission } from '../../hooks';
+import { useRecordCommentCount } from '../comment/hooks';
 import { TooltipWrap } from './TooltipWrap';
 
 interface IExpandRecordHeader {
+  tableId: string;
+  recordId: string;
   title?: string;
-  showActivity?: boolean;
+  recordHistoryVisible?: boolean;
+  commentVisible?: boolean;
   disabledPrev?: boolean;
   disabledNext?: boolean;
   onClose?: () => void;
   onPrev?: () => void;
   onNext?: () => void;
   onCopyUrl?: () => void;
-  onShowActivity?: () => void;
+  onRecordHistoryToggle?: () => void;
+  onCommentToggle?: () => void;
+  onDelete?: () => Promise<void>;
+  onDuplicate?: () => Promise<void>;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -24,28 +49,39 @@ const MIN_OPERATOR_WIDTH = 200;
 
 export const ExpandRecordHeader = (props: IExpandRecordHeader) => {
   const {
+    tableId,
+    recordId,
     title,
-    showActivity,
+    recordHistoryVisible,
+    commentVisible,
     disabledPrev,
     disabledNext,
     onPrev,
     onNext,
     onClose,
     onCopyUrl,
-    onShowActivity,
+    onRecordHistoryToggle,
+    onCommentToggle,
+    onDelete,
+    onDuplicate,
   } = props;
 
+  const permission = useTablePermission();
+  const editable = Boolean(permission['record|update']);
+  const canRead = Boolean(permission['record|read']);
+  const canDelete = Boolean(permission['record|delete']);
   const [ref, { width }] = useMeasure<HTMLDivElement>();
   const { t } = useTranslation();
   const showTitle = width > MIN_TITLE_WIDTH;
   const showOperator = width > MIN_OPERATOR_WIDTH;
+  const recordCommentCount = useRecordCommentCount(tableId, recordId, canRead);
 
   return (
     <div
       ref={ref}
-      className={classNames(
+      className={cn(
         'w-full h-12 flex items-center gap-4 px-4 border-b border-solid border-border',
-        'justify-between' && !showTitle
+        { 'justify-between': !showTitle }
       )}
     >
       <div>
@@ -53,22 +89,22 @@ export const ExpandRecordHeader = (props: IExpandRecordHeader) => {
           <Button
             variant={'ghost'}
             tabIndex={-1}
-            size={'xs'}
+            size={'icon-xs'}
             onClick={onPrev}
             disabled={disabledPrev}
           >
-            <ChevronUp />
+            <ChevronUp className="size-4 shrink-0" />
           </Button>
         </TooltipWrap>
         <TooltipWrap description="Next record" disabled={disabledNext}>
           <Button
             variant={'ghost'}
-            size={'xs'}
+            size={'icon-xs'}
             tabIndex={-1}
             onClick={onNext}
             disabled={disabledNext}
           >
-            <ChevronDown />
+            <ChevronDown className="size-4 shrink-0" />
           </Button>
         </TooltipWrap>
       </div>
@@ -81,26 +117,82 @@ export const ExpandRecordHeader = (props: IExpandRecordHeader) => {
         </h4>
       )}
       {showOperator && (
-        <div>
-          <TooltipWrap description="Copy record URL">
-            <Button variant={'ghost'} size={'xs'} onClick={onCopyUrl}>
-              <Link />
+        <div className="flex items-center gap-1">
+          <TooltipWrap description={t('expandRecord.copyRecordUrl')}>
+            <Button variant={'ghost'} size={'icon-xs'} onClick={onCopyUrl}>
+              <Link className="size-4 shrink-0" />
             </Button>
           </TooltipWrap>
-          <TooltipWrap description={`${showActivity ? 'Hide' : 'Show'} activity`}>
-            <Button
-              variant={showActivity ? 'secondary' : 'ghost'}
-              size={'xs'}
-              onClick={onShowActivity}
+          {editable && (
+            <TooltipWrap
+              description={
+                recordHistoryVisible
+                  ? t('expandRecord.recordHistory.hiddenRecordHistory')
+                  : t('expandRecord.recordHistory.showRecordHistory')
+              }
             >
-              <MessageSquare />
-            </Button>
-          </TooltipWrap>
+              <Button
+                variant={recordHistoryVisible ? 'secondary' : 'ghost'}
+                size={'icon-xs'}
+                onClick={onRecordHistoryToggle}
+              >
+                <History className="size-4 shrink-0" />
+              </Button>
+            </TooltipWrap>
+          )}
+
+          {editable && (
+            <TooltipWrap description={t('comment.title')}>
+              <Button
+                size={'icon-xs'}
+                onClick={onCommentToggle}
+                variant={commentVisible ? 'secondary' : 'ghost'}
+                className="relative"
+              >
+                <MessageSquare className="size-4 shrink-0" />
+                {recordCommentCount ? (
+                  <div className="absolute left-4 top-0.5 flex h-3 min-w-3 max-w-5 items-center justify-center rounded-[2px] bg-orange-500 px-0.5 text-[8px] text-white">
+                    {recordCommentCount > 99 ? '99+' : recordCommentCount}
+                  </div>
+                ) : null}
+              </Button>
+            </TooltipWrap>
+          )}
+
+          {canDelete ? (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger className="size-7 rounded-md px-1.5 hover:bg-accent hover:text-accent-foreground">
+                <MoreHorizontal className="size-4 shrink-0" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {!!onDuplicate && (
+                  <DropdownMenuItem
+                    className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm outline-none"
+                    onClick={async () => {
+                      await onDuplicate();
+                      setTimeout(() => onClose?.(), 100);
+                    }}
+                  >
+                    <Copy /> {t('expandRecord.duplicateRecord')}
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  className="flex cursor-pointer items-center gap-2 px-4 py-2 text-sm text-red-500 outline-none hover:text-red-500 focus:text-red-500 aria-selected:text-red-500"
+                  onClick={async () => {
+                    await onDelete?.();
+                    setTimeout(() => onClose?.(), 100);
+                  }}
+                >
+                  <Trash2 /> {t('expandRecord.deleteRecord')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
       )}
       <Separator className="h-6" orientation="vertical" />
-      <Button variant={'ghost'} size={'xs'} onClick={onClose}>
-        <X />
+      <Button variant={'ghost'} size={'icon-xs'} onClick={onClose}>
+        <X className="size-4 shrink-0" />
       </Button>
     </div>
   );

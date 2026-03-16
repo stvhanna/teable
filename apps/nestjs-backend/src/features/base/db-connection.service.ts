@@ -1,28 +1,24 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+/* eslint-disable sonarjs/no-duplicate-string */
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { IDsn } from '@teable/core';
-import { DriverClient, parseDsn } from '@teable/core';
+import { DriverClient, HttpErrorCode, parseDsn } from '@teable/core';
 import { PrismaService } from '@teable/db-main-prisma';
 import type { IDbConnectionVo } from '@teable/openapi';
 import { Knex } from 'knex';
 import { nanoid } from 'nanoid';
 import { InjectModel } from 'nest-knexjs';
-import { ClsService } from 'nestjs-cls';
 import { BaseConfig, type IBaseConfig } from '../../configs/base.config';
+import { CustomHttpException } from '../../custom.exception';
 import { InjectDbProvider } from '../../db-provider/db.provider';
 import { IDbProvider } from '../../db-provider/db.provider.interface';
-import type { IClsStore } from '../../types/cls';
 
 @Injectable()
 export class DbConnectionService {
+  private readonly logger = new Logger(DbConnectionService.name);
+
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly cls: ClsService<IClsStore>,
     private readonly configService: ConfigService,
     @InjectDbProvider() private readonly dbProvider: IDbProvider,
     @InjectModel('CUSTOM_KNEX') private readonly knex: Knex,
@@ -32,7 +28,14 @@ export class DbConnectionService {
   private getUrlFromDsn(dsn: IDsn): string {
     const { driver, host, port, db, user, pass, params } = dsn;
     if (driver !== DriverClient.Pg) {
-      throw new Error('Unsupported database driver');
+      throw new CustomHttpException('Unsupported database driver', HttpErrorCode.VALIDATION_ERROR, {
+        localization: {
+          i18nKey: 'httpErrors.dbConnection.unsupportedDriver',
+          context: {
+            driver,
+          },
+        },
+      });
     }
 
     const paramString =
@@ -44,9 +47,15 @@ export class DbConnectionService {
   }
 
   async remove(baseId: string) {
-    const userId = this.cls.get('user.id'); // Assuming you have some user context
     if (this.dbProvider.driver !== DriverClient.Pg) {
-      throw new BadRequestException(`Unsupported database driver: ${this.dbProvider.driver}`);
+      throw new CustomHttpException('Unsupported database driver', HttpErrorCode.VALIDATION_ERROR, {
+        localization: {
+          i18nKey: 'httpErrors.dbConnection.unsupportedDriver',
+          context: {
+            driver: this.dbProvider.driver,
+          },
+        },
+      });
     }
 
     const readOnlyRole = `read_only_role_${baseId}`;
@@ -55,10 +64,21 @@ export class DbConnectionService {
       // Verify if the base exists and if the user is the owner
       await prisma.base
         .findFirstOrThrow({
-          where: { id: baseId, createdBy: userId, deletedTime: null }, // TODO: change it to owner check
+          where: { id: baseId, deletedTime: null },
         })
         .catch(() => {
-          throw new BadRequestException('Only the base owner can remove a db connection');
+          throw new CustomHttpException(
+            'Only the base owner can remove a db connection',
+            HttpErrorCode.RESTRICTED_RESOURCE,
+            {
+              localization: {
+                i18nKey: 'httpErrors.dbConnection.onlyOwnerCanRemove',
+                context: {
+                  baseId,
+                },
+              },
+            }
+          );
         });
 
       // Revoke permissions from the role for the schema
@@ -113,15 +133,17 @@ export class DbConnectionService {
 
   async retrieve(baseId: string): Promise<IDbConnectionVo | null> {
     if (this.dbProvider.driver !== DriverClient.Pg) {
-      throw new BadRequestException(`Unsupported database driver: ${this.dbProvider.driver}`);
+      return null;
     }
 
     const readOnlyRole = `read_only_role_${baseId}`;
-    if (!this.baseConfig.publicDatabaseAddress) {
-      throw new NotFoundException('PUBLIC_DATABASE_ADDRESS is not found in env');
+    const publicDatabaseProxy = this.baseConfig.publicDatabaseProxy;
+    if (!publicDatabaseProxy) {
+      this.logger.error('PUBLIC_DATABASE_PROXY is not found in env');
+      return null;
     }
 
-    const originDsn = parseDsn(this.baseConfig.publicDatabaseAddress); // Assuming parseDsn is already defined to parse the DSN
+    const { hostname: dbHostProxy, port: dbPortProxy } = new URL(`https://${publicDatabaseProxy}`);
 
     // Check if the base exists and the user is the owner
     const base = await this.prismaService.base.findFirst({
@@ -135,17 +157,27 @@ export class DbConnectionService {
 
     // Check if the read-only role already exists
     if (!(await this.roleExits(readOnlyRole))) {
-      throw new InternalServerErrorException(`Role does not exist: ${readOnlyRole}`);
+      throw new CustomHttpException('Role does not exist', HttpErrorCode.INTERNAL_SERVER_ERROR, {
+        localization: {
+          i18nKey: 'httpErrors.dbConnection.roleNotExist',
+          context: {
+            role: readOnlyRole,
+          },
+        },
+      });
     }
 
     const currentConnections = await this.getConnectionCount(readOnlyRole);
 
+    const databaseUrl = this.configService.getOrThrow<string>('PRISMA_DATABASE_URL');
+    const { db } = parseDsn(databaseUrl);
+
     // Construct the DSN for the read-only role
     const dsn: IDbConnectionVo['dsn'] = {
       driver: DriverClient.Pg,
-      host: originDsn.host,
-      port: originDsn.port,
-      db: originDsn.db,
+      host: dbHostProxy,
+      port: Number(dbPortProxy),
+      db: db,
       user: readOnlyRole,
       pass: base.schemaPass,
       params: {
@@ -176,25 +208,40 @@ export class DbConnectionService {
    * limit role to only access the schema
    */
   async create(baseId: string) {
-    const userId = this.cls.get('user.id');
     if (this.dbProvider.driver === DriverClient.Pg) {
       const readOnlyRole = `read_only_role_${baseId}`;
       const schemaName = baseId;
       const password = nanoid();
-      const databaseUrl = this.baseConfig.publicDatabaseAddress;
-      if (!databaseUrl) {
-        throw new NotFoundException('PUBLIC_DATABASE_ADDRESS is not found in env');
+      const publicDatabaseProxy = this.baseConfig.publicDatabaseProxy;
+      if (!publicDatabaseProxy) {
+        this.logger.error('PUBLIC_DATABASE_PROXY is not found in env');
+        return null;
       }
 
-      const originDsn = parseDsn(databaseUrl);
+      const { hostname: dbHostProxy, port: dbPortProxy } = new URL(
+        `https://${publicDatabaseProxy}`
+      );
+      const databaseUrl = this.configService.getOrThrow<string>('PRISMA_DATABASE_URL');
+      const { db } = parseDsn(databaseUrl);
 
       return this.prismaService.$tx(async (prisma) => {
         await prisma.base
           .findFirstOrThrow({
-            where: { id: baseId, createdBy: userId, deletedTime: null }, // TODO: change it to owner check
+            where: { id: baseId, deletedTime: null },
           })
           .catch(() => {
-            throw new BadRequestException('only base owner can public db connection');
+            throw new CustomHttpException(
+              'Only base owner can create db connection',
+              HttpErrorCode.RESTRICTED_RESOURCE,
+              {
+                localization: {
+                  i18nKey: 'httpErrors.dbConnection.onlyOwnerCanCreate',
+                  context: {
+                    baseId,
+                  },
+                },
+              }
+            );
           });
 
         await prisma.base.update({
@@ -233,9 +280,9 @@ export class DbConnectionService {
 
         const dsn: IDbConnectionVo['dsn'] = {
           driver: DriverClient.Pg,
-          host: originDsn.host,
-          port: originDsn.port,
-          db: originDsn.db,
+          host: dbHostProxy,
+          port: Number(dbPortProxy),
+          db: db,
           user: readOnlyRole,
           pass: password,
           params: {
@@ -254,6 +301,13 @@ export class DbConnectionService {
       });
     }
 
-    throw new BadRequestException(`Unsupported database driver: ${this.dbProvider.driver}`);
+    throw new CustomHttpException('Unsupported database driver', HttpErrorCode.VALIDATION_ERROR, {
+      localization: {
+        i18nKey: 'httpErrors.dbConnection.unsupportedDriver',
+        context: {
+          driver: this.dbProvider.driver,
+        },
+      },
+    });
   }
 }

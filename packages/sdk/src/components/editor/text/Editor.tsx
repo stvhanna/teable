@@ -12,7 +12,7 @@ interface ITextEditor extends ICellEditor<string | null> {
 }
 
 const TextEditorBase: ForwardRefRenderFunction<IEditorRef<string>, ITextEditor> = (props, ref) => {
-  const { value, options, onChange, className, readonly, style } = props;
+  const { value, options, onChange, className, readonly, style, saveOnBlur = true } = props;
   const [text, setText] = useState<string>(value || '');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const showAs = options.showAs;
@@ -28,7 +28,7 @@ const TextEditorBase: ForwardRefRenderFunction<IEditorRef<string>, ITextEditor> 
   };
 
   const saveValue = () => {
-    onChange?.(text || null);
+    onChange?.(text ? text.trim() : null);
   };
 
   const onJump = (type: SingleLineTextDisplayType) => {
@@ -56,8 +56,8 @@ const TextEditorBase: ForwardRefRenderFunction<IEditorRef<string>, ITextEditor> 
         className={cn('h-10 sm:h-8', className)}
         value={text}
         onChange={onChangeInner}
-        onBlur={saveValue}
-        disabled={readonly}
+        onBlur={() => saveOnBlur && saveValue()}
+        readOnly={readonly}
       />
       {showAs && (
         <Button variant="outline" size="sm" className="px-2" onClick={() => onJump(showAs.type)}>

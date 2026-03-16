@@ -1,11 +1,10 @@
-import { IdPrefix } from '../../../utils';
 import { z } from '../../../zod';
 import { SortFunc } from './sort-func.enum';
 
-export const orderSchema = z.nativeEnum(SortFunc);
+export const orderSchema = z.enum(SortFunc);
 
 export const sortItemSchema = z.object({
-  fieldId: z.string().startsWith(IdPrefix.Field).openapi({
+  fieldId: z.string().meta({
     description: 'The id of the field.',
   }),
   order: orderSchema,
@@ -59,13 +58,15 @@ export function mergeWithDefaultSort(
     return [];
   }
 
-  let mergeSort = viewSort?.sortObjs || [];
+  const mergeSort = viewSort?.sortObjs || [];
 
   if (querySort?.length) {
     // merge the same fieldId item, query first
-    const map = new Map(mergeSort.map((sortItem) => [sortItem.fieldId, sortItem]));
-    querySort.forEach((sortItem) => map.set(sortItem.fieldId, sortItem));
-    mergeSort = Array.from(map.values());
+    const map = new Map(querySort.map((sortItem) => [sortItem.fieldId, sortItem]));
+    mergeSort.forEach((sortItem) => {
+      !map.has(sortItem.fieldId) && map.set(sortItem.fieldId, sortItem);
+    });
+    return Array.from(map.values());
   }
 
   return mergeSort;

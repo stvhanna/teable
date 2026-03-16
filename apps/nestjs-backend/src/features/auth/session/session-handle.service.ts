@@ -19,7 +19,8 @@ export class SessionHandleService {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        maxAge: ms(this.authConfig.session.expiresIn),
+        maxAge: ms('1y'),
+        secure: this.authConfig.session.cookie.secure,
       },
       store: this.sessionStoreService,
     });

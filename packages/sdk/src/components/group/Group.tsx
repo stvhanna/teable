@@ -3,6 +3,7 @@ import { LayoutList } from '@teable/icons';
 import { Popover, PopoverContent, PopoverTrigger } from '@teable/ui-lib';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from '../../context/app/i18n';
+import { ReadOnlyTip } from '../ReadOnlyTip';
 import { SortContent } from '../sort/SortContent';
 
 interface IGroupProps {
@@ -20,14 +21,14 @@ export const Group = (props: IGroupProps) => {
 
   const { text, isActive } = useMemo(() => {
     const text = groupLength
-      ? `Group By ${groupLength} field${groupLength > 1 ? 's' : ''}`
-      : 'Group';
+      ? t(`group.displayLabel_${groupLength > 1 ? 'other' : 'one'}`, { count: groupLength })
+      : t('group.label');
     return {
       text,
-      isActive: text !== 'Group',
+      isActive: text !== t('group.label'),
       Icon: LayoutList,
     };
-  }, [groupLength]);
+  }, [groupLength, t]);
 
   const onChangeInner = (group?: IGroup | null) => {
     onChange?.(group?.length ? group : null);
@@ -36,10 +37,13 @@ export const Group = (props: IGroupProps) => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>{children?.(text, isActive)}</PopoverTrigger>
-      <PopoverContent side="bottom" align="start" className="w-fit max-w-screen-md p-0">
-        <header className="mx-3">
-          <div className="border-b py-3 text-xs">{t('group.title')}</div>
-        </header>
+      <PopoverContent
+        side="bottom"
+        align="start"
+        className="relative w-fit max-w-screen-md overflow-hidden rounded-lg p-0"
+      >
+        <ReadOnlyTip />
+        <div className="px-4 pt-3 text-[13px]">{t('group.setTips')}</div>
         <SortContent
           limit={3}
           sortValues={group ?? undefined}

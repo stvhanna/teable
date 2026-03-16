@@ -1,12 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { IAggregationRo, IGridColumnMeta } from '@teable/core';
-import type { IShareViewAggregationsRo } from '@teable/openapi';
+import type { IGridColumnMeta, ITableActionKey, IViewActionKey } from '@teable/core';
+import type { IShareViewAggregationsRo, StatisticsFunc } from '@teable/openapi';
 import { getShareViewAggregations } from '@teable/openapi';
-import type { PropKeys } from '@teable/sdk';
-import { useView, ReactQueryKeys, AggregationContext, useActionTrigger } from '@teable/sdk';
+import {
+  useView,
+  ReactQueryKeys,
+  AggregationContext,
+  useSearch,
+  useViewListener,
+  useTableListener,
+  ShareViewContext,
+} from '@teable/sdk';
 import type { ReactNode } from 'react';
-import { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import { ShareViewPageContext } from '../../../ShareViewPageContext';
+import { useCallback, useContext, useMemo, useRef } from 'react';
 
 interface IAggregationProviderProps {
   children: ReactNode;
@@ -14,27 +20,34 @@ interface IAggregationProviderProps {
 
 const useAggregationQuery = (): IShareViewAggregationsRo => {
   const view = useView();
+  const { searchQuery } = useSearch();
+
   const field = useMemo(
     () =>
-      view?.columnMeta &&
-      Object.entries(view.columnMeta as IGridColumnMeta).reduce<Partial<IAggregationRo['field']>>(
-        (acc, [fieldId, { statisticFunc }]) => {
-          if (statisticFunc && acc) {
-            const existingArr = acc[statisticFunc] || [];
-            acc[statisticFunc] = [...existingArr, fieldId];
-          }
-          return acc;
-        },
-        {}
-      ),
+      view?.columnMeta
+        ? Object.entries(view.columnMeta as IGridColumnMeta).reduce<
+            Record<StatisticsFunc, string[]>
+          >(
+            (acc, [fieldId, { statisticFunc }]) => {
+              if (statisticFunc && acc) {
+                const existingArr = acc[statisticFunc] || [];
+                acc[statisticFunc] = [...existingArr, fieldId];
+              }
+              return acc;
+            },
+            {} as Record<StatisticsFunc, string[]>
+          )
+        : undefined,
     [view?.columnMeta]
   );
-  return useMemo(() => ({ filter: view?.filter, field }), [field, view?.filter]);
+  return useMemo(
+    () => ({ filter: view?.filter, field, search: searchQuery, groupBy: view?.group }),
+    [field, searchQuery, view?.filter, view?.group]
+  );
 };
 
 export const AggregationProvider = ({ children }: IAggregationProviderProps) => {
-  const { tableId, viewId, shareId } = useContext(ShareViewPageContext);
-  const { listener } = useActionTrigger();
+  const { tableId, shareId } = useContext(ShareViewContext);
   const queryClient = useQueryClient();
   const query = useAggregationQuery();
   const queryRef = useRef(query);
@@ -42,33 +55,36 @@ export const AggregationProvider = ({ children }: IAggregationProviderProps) => 
 
   const { data: shareViewAggregations } = useQuery({
     queryKey: ReactQueryKeys.shareViewAggregations(shareId, query),
-    queryFn: ({ queryKey }) => getShareViewAggregations(queryKey[1], queryKey[2]),
+    queryFn: ({ queryKey }) =>
+      getShareViewAggregations(queryKey[1], queryKey[2]).then((data) => data.data),
     refetchOnWindowFocus: false,
   });
 
   const updateViewAggregations = useCallback(
-    () => queryClient.invalidateQueries(ReactQueryKeys.shareViewAggregations(shareId, query)),
+    () =>
+      queryClient.invalidateQueries({
+        queryKey: ReactQueryKeys.shareViewAggregations(shareId, query),
+      }),
     [query, queryClient, shareId]
   );
 
-  useEffect(() => {
-    const relevantProps: PropKeys[] = [
-      'addRecord',
-      'setRecord',
-      'deleteRecord',
-      'applyViewFilter',
-      'showViewField',
-      'applyViewStatisticFunc',
-    ];
+  const tableMatches = useMemo<ITableActionKey[]>(
+    () => ['setRecord', 'addRecord', 'deleteRecord'],
+    []
+  );
+  useTableListener(tableId, tableMatches, updateViewAggregations);
 
-    listener?.(relevantProps, () => updateViewAggregations(), [tableId, viewId]);
-  }, [listener, tableId, updateViewAggregations, viewId]);
+  const viewMatches = useMemo<IViewActionKey[]>(
+    () => ['applyViewFilter', 'showViewField', 'applyViewStatisticFunc'],
+    []
+  );
+  useViewListener(tableId, viewMatches, updateViewAggregations);
 
   const viewAggregation = useMemo(() => {
     if (!shareViewAggregations) {
       return {};
     }
-    const { aggregations } = shareViewAggregations.data;
+    const { aggregations } = shareViewAggregations;
     return {
       aggregations: aggregations ?? [],
     };

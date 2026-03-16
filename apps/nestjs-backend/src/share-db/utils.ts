@@ -29,7 +29,4 @@ export const getAction = (op: CreateOp | DeleteOp | EditOp) => {
   return null;
 };
 
-export const isShareViewResourceDoc = (docType: IdPrefix) => {
-  const shareViewResource = [IdPrefix.View, IdPrefix.Field, IdPrefix.Record];
-  return shareViewResource.includes(docType);
-};
+export const getAxiosBaseUrl = () => `http://localhost:${process.env.PORT}/api`;

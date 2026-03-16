@@ -1,0 +1,1246 @@
+{
+  "toolbar": {
+    "comingSoon": "近日公開",
+    "viewFilterInShare": "このビューはビュー共有リンクで使用されています。ビュー構成を変更するとビュー共有リンクも変更されます。",
+    "createFieldButtonText": "新しい<0/>フィールドを作成する",
+    "others": {
+      "share": {
+        "label": "共有",
+        "statusLabel": "共有中",
+        "shareLink": "共有リンク",
+        "copied": "コピーしました",
+        "genLink": "新しいリンクを生成する",
+        "allowCopy": "閲覧者がこのビューからデータをコピーできるようにする",
+        "showAllFields": "展開されたレコードのすべてのフィールドを表示する",
+        "restrict": "パスワードによる制限",
+        "tips": "リンクを持っている人はそのビューを見ることができます。",
+        "passwordTitle": "パスワードを入力してください",
+        "passwordTips": "共有ビューにアクセスするためのパスワード制限",
+        "embed": "埋め込み",
+        "embedPreview": "埋め込みプレビュー",
+        "hideToolbar": "ツールバーを隠す",
+        "URLSetting": "URLパラメータ設定",
+        "URLSettingDescription": "以下の設定を調整しても共有リンクには影響しません。新しいパラメータでリンクをコピーして有効にする必要があります。",
+        "cancel": "キャンセル",
+        "save": "保存"
+      },
+      "extensions": {
+        "label": "拡張機能",
+        "graph": "グラフ"
+      },
+      "api": {
+        "label": "API",
+        "restfulApi": "Restful API",
+        "databaseConnection": "データベース接続"
+      },
+      "personalView": {
+        "personal": "個人",
+        "tip": "有効化すると、表示設定は自分にのみ適用されます",
+        "collaborative": "協同",
+        "dialog": {
+          "title": "パーソナルモードを終了",
+          "description": "パーソナルビューの構成はリアルタイム共同作業の状態に復元されます。パーソナルビューの設定を保存し、全員に同期することもできます。",
+          "cancelText": "終了して同期",
+          "confirmText": "終了を確認"
+        }
+      }
+    }
+  },
+  "welcome": {
+    "title": "ようこそ",
+    "emptyTitle": "データベースの構築を始めましょう",
+    "description": "サイドバーの「+」ボタンをクリックしてリソースを追加",
+    "help": "詳細については、<HelpCenter /> をご覧ください",
+    "helpCenter": "ヘルプセンター"
+  },
+  "validation": {
+    "link": {
+      "batch_duplicate": "関連付けできません：同じバッチ内で、このレコードはすでに別のレコードに関連付けられています。一対多の関係では、各子レコードは1つの親レコードにのみ属できます。",
+      "one_many_duplicate": "関連付けできません：このレコードはすでに別のレコードに関連付けられています。一対多の関係では、各子レコードは1つの親レコードにのみ属できます。",
+      "one_one_duplicate": "関連付けできません：対象レコードは一対一の関係ですでに別のレコードに関連付けられています。"
+    },
+    "field": {
+      "maxColumnLimit": "テーブル「{{tableName}}」には最大 {{maxFieldCount}} 個のフィールドしか作成できません。"
+    }
+  },
+  "field": {
+    "fieldManagement": "フィールド管理",
+    "fieldManagementDesc": "現在のテーブルのすべてのフィールドの詳細なプロパティ",
+    "advancedProps": "高度なプロパティ",
+    "hide": "非表示",
+    "default": {
+      "singleLineText": {
+        "title": "ラベル"
+      },
+      "longText": {
+        "title": "注記"
+      },
+      "number": {
+        "title": "番号",
+        "formatType": "フォーマットタイプ",
+        "currencySymbol": "通貨記号",
+        "defaultSymbol": "￥",
+        "precision": "精度",
+        "decimalExample": "小数点 (1.0)",
+        "currencyExample": "通貨 (￥100)",
+        "percentExample": "パーセント (20%)"
+      },
+      "singleSelect": {
+        "title": "ステータス",
+        "options": {
+          "todo": "To Do",
+          "inProgress": "進行中",
+          "done": "完了"
+        }
+      },
+      "multipleSelect": {
+        "title": "タグ"
+      },
+      "attachment": {
+        "title": "添付ファイル"
+      },
+      "user": {
+        "title": "共同作業者"
+      },
+      "date": {
+        "title": "日付",
+        "dateFormatting": "日付の書式設定",
+        "timeFormatting": "時刻の書式設定",
+        "timeZone": "タイムゾーン",
+        "yearMonth": "年/月",
+        "monthDay": "月/日",
+        "year": "年",
+        "month": "月",
+        "day": "日",
+        "local": "地域",
+        "friendly": "友好的",
+        "us": "アメリカ合衆国S",
+        "european": "ヨーロッパ",
+        "asia": "アジア",
+        "custom": "カスタム",
+        "12Hour": "12時間",
+        "24Hour": "24時間",
+        "noDisplay": "表示なし"
+      },
+      "autoNumber": {
+        "title": "ID"
+      },
+      "createdTime": {
+        "title": "作成日時"
+      },
+      "lastModifiedTime": {
+        "title": "最終更新日時"
+      },
+      "createdBy": {
+        "title": "作成者"
+      },
+      "lastModifiedBy": {
+        "title": "最終更新者"
+      },
+      "rating": {
+        "title": "評価"
+      },
+      "checkbox": {
+        "title": "完了"
+      },
+      "button": {
+        "title": "ボタン",
+        "label": "ボタンラベル",
+        "color": "ボタンカラー",
+        "limitCount": "クリック数制限",
+        "resetCount": "クリック数のリセットを許可",
+        "maxCount": "最大クリック数",
+        "automation": "自動化",
+        "customAutomation": "カスタマイズされた自動化",
+        "clickConfirm": "クリック前に確認",
+        "confirmTitle": "タイトル",
+        "confirmDescription": "内容",
+        "confirmButtonText": "確認ボタンテキスト"
+      },
+      "formula": {
+        "title": "計算",
+        "formula": "式"
+      },
+      "lookup": {
+        "title": "{{linkFieldName}} から {{lookupFieldName}} を見つける"
+      },
+      "conditionalLookup": {
+        "title": "{{tableName}} から {{lookupFieldName}} をフィルター表示"
+      },
+      "rollup": {
+        "title": "{{linkFieldName}} の {{lookupFieldName}} の要約",
+        "rollup": "ロールアップ",
+        "selectAnRollupFunction": "ロールアップ機能を選択",
+        "func": {
+          "and": "AND",
+          "arrayCompact": "ARRAYCOMPACT",
+          "arrayJoin": "ARRAYJOIN",
+          "arrayUnique": "ARRAYUNIQUE",
+          "average": "AVERAGE",
+          "concatenate": "CONCATENATE",
+          "count": "COUNT",
+          "countA": "COUNTA",
+          "countAll": "COUNTALL",
+          "max": "MAX",
+          "min": "MIN",
+          "or": "OR",
+          "sum": "SUM",
+          "xor": "XOR"
+        },
+        "funcDesc": {
+          "and": "すべての値が真の場合に真を返す",
+          "arrayCompact": "配列から空の文字列と null値 を削除します。 'false' と 1 つ以上の空白文字を含む文字列は保持されます。",
+          "arrayJoin": "すべての値を1つのコンマ区切りの文字列に結合します。",
+          "arrayUnique": "固有のアイテムのみを返します。",
+          "average": "値の平均。",
+          "concatenate": "テキスト値を1つのテキスト値に結合します。",
+          "count": "空でない数値のみをカウントします。すべてのレコードをカウントする場合は、COUNTALL を使用します。",
+          "countA": "空でない値の数をカウントします。この関数は数値とテキスト値の両方をカウントします。",
+          "countAll": "空白レコードを含むすべての値をカウントします。",
+          "max": "指定された数値の最大値を返します。",
+          "min": "指定された数値の最小値を返します。",
+          "or": "いずれかの値が真の場合、true を返します。",
+          "sum": "値を合計します。",
+          "xor": "真の値の数が奇数のと場合、 true を返します。"
+        }
+      },
+      "conditionalRollup": {
+        "title": "{{lookupFieldName}} 条件付きロールアップ"
+      }
+    },
+    "editor": {
+      "addField": "フィールドの追加",
+      "editField": "フィールドの編集",
+      "insertField": "フィールドの挿入",
+      "graph": "グラフ",
+      "fieldUpdated": "フィールドが更新されました",
+      "fieldCreated": "フィールドが作成されました",
+      "confirmFieldChange": "Confirm Field Change",
+      "areYouSurePerformIt": "本当に実行しますか？",
+      "addDescription": "説明を追加",
+      "dbFieldName": "物理フィールド名",
+      "description": "説明",
+      "descriptionPlaceholder": "このフィールドについて説明してください（オプション）",
+      "type": "タイプ",
+      "showAs": "表示形式",
+      "color": "色",
+      "number": "番号",
+      "chartBar": "チャートバー",
+      "chartLine": "チャートライン",
+      "ring": "円",
+      "bar": "棒",
+      "text": "テキスト",
+      "url": "Url",
+      "email": "メール",
+      "phone": "電話",
+      "maxNumber": "最大数",
+      "showNumber": "番号を表示",
+      "autoFillDate": "現在の日付を自動入力",
+      "createSymmetricLink": "リンクテーブルにバックリンクフィールドを作成する",
+      "allowLinkMultipleRecords": "複数選択を許可する",
+      "allowLinkToDuplicateRecords": "レコードを複数回選択できます",
+      "allowSymmetricFieldLinkMultipleRecords": "レコードを複数回選択できます",
+      "oneToOne": "1 対 1",
+      "oneToMany": "1 対 複数",
+      "manyToOne": "複数 対 1",
+      "manyToMany": "複数 対 複数",
+      "self": "自分",
+      "selectTable": "テーブルを選択...",
+      "inSelfLink": "セルフリンク",
+      "betweenTwoTables": "2つのテーブルの間",
+      "tips": "ヒント",
+      "linkTipMessage": "この構成は<br></br> <b>{{relationship}}</b> 関係 <span>{{linkType}}</span> を表します",
+      "style": "スタイル",
+      "maximum": "最大",
+      "addOption": "オプションを追加",
+      "allowMultiUsers": "複数のユーザーの追加を許可する",
+      "notifyUsers": "選択されたらユーザーに通知する",
+      "searchTable": "テーブルの検索...",
+      "calculating": "計算中...",
+      "doSaveChanges": "変更内容を保存しますか？",
+      "linkFieldToLookup": "参照用リンクレコードフィールド",
+      "lookupToTable": "参照したい <bold>{{tableName}}</bold> フィールド",
+      "rollupToTable": "<bold>{{tableName}}</bold> からロールアップしたいフィールド",
+      "selectField": "フィールドを選択...",
+      "linkTable": "リンクテーブル",
+      "noLinkTip": "参照するリンクされたレコードがありません。別のレコードへのリンクフィールドを追加して、参照を再度構成してください。",
+      "fieldValidationRules": "フィールド値の検証ルール",
+      "enableValidateFieldUnique": "一意の値のみ",
+      "enableValidateFieldNotNull": "必須",
+      "knowMore": "さらに詳しく",
+      "linkFieldKnowMoreLink": "https://help.teable.ai/en/basic/field/advanced/link",
+      "showByField": "フィールドでレコードを表示する",
+      "filterByView": "ビューでレコードをフィルターする",
+      "filter": "レコードをフィルターする",
+      "hideFields": "フィールドを非表示にする",
+      "moreOptions": "オプションを表示",
+      "allowNewOptionsWhenEditing": "編集時に新しいオプションを許可",
+      "deleteField": {
+        "title": "フィールドを削除",
+        "simpleConfirm": "フィールド <b>{{fieldName}}</b> を削除してもよろしいですか？",
+        "withDependencies": "フィールド <b>{{fieldName}}</b> を削除すると、以下のフィールドに影響します：",
+        "affectedFields": "影響を受けるフィールド：",
+        "fieldsToDelete": "削除するフィールド ({{count}})",
+        "unviewedHint": "{{count}} 個のフィールドが未確認",
+        "deleteCount": "{{count}} 個のフィールドを削除",
+        "noAffectedFields": "このフィールドは他のフィールドから参照されていません。",
+        "riskIdentified": "リスクあり({{count}})",
+        "noDependencies": "依存関係なし({{count}})",
+        "safeToDelete": "安全に削除可能",
+        "safeToDeleteDesc": "このフィールドは他のフィールドから参照されていないため、安全に削除できます",
+        "affectedItems": "影響を受ける項目",
+        "type": "タイプ",
+        "source": "ソース",
+        "sourceTable": "ソーステーブル",
+        "typeField": "フィールド"
+      },
+      "conditionalLookup": {
+        "sortLimitToggleLabel": "Sort linked records and limit the number of matches",
+        "sortLabel": "Sort results",
+        "orderPlaceholder": "Select an order",
+        "clearSort": "Clear sort",
+        "limitLabel": "Maximum records to include",
+        "limitPlaceholder": "Leave blank to include all matches",
+        "limitHint": "We only keep up to {{limit}} matching records.",
+        "sortMissingWarningTitle": "Sorting field unavailable",
+        "sortMissingWarningDescription": "The field that powered this sort was deleted. Results ignore the sort and only enforce the limit."
+      }
+    },
+    "subTitle": {
+      "link": "選択したテーブル内のレコードへのリンク",
+      "singleLineText": "テキストを入力するか、新しいセルごとにデフォルト値を事前に入力します。",
+      "longText": "複数行のテキストを入力します。",
+      "attachment": "画像を追加またはAIで生成、もしくはドキュメントやその他のファイルをアップロードして表示またはダウンロードできます。",
+      "checkbox": "ステータスを示すためにチェックを入れるか外します。",
+      "multipleSelect": "リストから1つ以上の定義済みオプションを選択します。",
+      "singleSelect": "リストから定義済みのオプションを1つ選択するか、新しいセルごとに既定のオプションを事前に入力します。",
+      "user": "レコードにユーザーを追加します。",
+      "date": "日付（例：2023/11/12）を入力するか、カレンダーから選択します。",
+      "number": "数値を入力するか、新しいセルごとにデフォルト値を事前に入力します。",
+      "duration": "時間、分、秒単位で時間の長さを入力します（例: 1:23）。",
+      "rating": "事前に定義された尺度で評価を追加します。",
+      "formula": "フィールドに基づいて値を計算します。",
+      "rollup": "リンクされたレコードからデータを要約します。",
+      "conditionalLookup": "設定したフィルターに一致する関連値を表示します。",
+      "count": "リンクされたレコードの数をカウントします。",
+      "createdTime": "各レコードが作成された日時を確認します。",
+      "lastModifiedTime": "レコード内の一部またはすべてのフィールドに対する最新の編集の日時を表示します。",
+      "createdBy": "レコードを作成したユーザーを確認します。",
+      "lastModifiedBy": "レコード内の一部またはすべてのフィールドに対して最新の編集を行ったユーザーを確認します。",
+      "autoNumber": "各レコードに対して固有の増分番号を自動的に生成します。",
+      "button": "カスタマイズされたアクションをトリガーします。",
+      "lookup": "リンクされたレコードのフィールドの値を表示します。"
+    },
+    "fieldName": "フィールド名",
+    "fieldNameOptional": "フィールド名（オプション）",
+    "fieldType": "フィールドタイプ",
+    "aiConfig": {
+      "title": "AI 設定",
+      "type": {
+        "summary": "要約",
+        "translation": "翻訳",
+        "extraction": "情報抽出",
+        "improvement": "改善",
+        "tag": "スマートタグ",
+        "classification": "スマート分類",
+        "customization": "カスタマイズ",
+        "imageGeneration": "画像生成",
+        "rating": "画像評価"
+      },
+      "label": {
+        "type": "AI アクションタイプ",
+        "model": "AI モデル",
+        "targetLanguage": "ターゲット言語",
+        "sourceField": "ソースフィールド",
+        "sourceFieldForTag": "フィールドを選択し、作成されたタグと一致させます",
+        "sourceFieldForClassify": "フィールドを選択し、作成された分類と一致させます",
+        "attachPrompt": "要件を添付",
+        "prompt": "カスタマイズされたプロンプト",
+        "sourceFieldForAttachment": "添付ファイルのソースフィールド",
+        "imageSize": "画像サイズ",
+        "imageQuality": "画像品質",
+        "imageCount": "画像数"
+      },
+      "placeholder": {
+        "summarize": "コンテンツのサマリー",
+        "translate": "簡潔でわかりやすく、軽快な翻訳",
+        "extractInfo": "メール、電話番号、名前、住所などを抽出...",
+        "extractDate": "開始時間を抽出...",
+        "improveText": "正式、親切、ユーモアがある...",
+        "attachPromptForTag": "3つ以内のタグを許可しない",
+        "attachPromptForClassify": "「進行中」を「リスクなし」と分類",
+        "attachPrompt": "追加の要件を入力してください",
+        "prompt": "カスタマイズされたプロンプトを入力してください",
+        "type": "AI アクションを選択",
+        "targetLanguage": "英語、中国語、フランス語...",
+        "imageSize": "画像サイズを入力してください",
+        "imageQuality": "画像品質を入力してください",
+        "attachPromptForImageGeneration": "画像は鮮明で自然なものにしてください",
+        "attachPromptForRating": "画像の品質を評価してください"
+      },
+      "imageQuality": {
+        "low": "低",
+        "medium": "中",
+        "high": "高"
+      },
+      "autoFill": {
+        "title": "自動更新",
+        "tip": "有効にすると、現在のフィールドは AI 構成の内容の変更と同期して更新されます"
+      },
+      "autoFillFieldDialog": {
+        "title": "すべてのレコードを更新",
+        "description": "現在のビューのすべてのレコードが更新され、フィールドによって生成されたすべての関連データが含まれます"
+      },
+      "autoFillConfirm": {
+        "title": "列全体を生成しますか？",
+        "description": "列全体を生成すると {{rowCount}} 行が更新されます。この操作は大量の AI リソースを消費する可能性があります。",
+        "saveConfigOnly": "設定のみ保存",
+        "generate": "生成する",
+        "generateFailed": "生成に失敗しました"
+      },
+      "action": {
+        "addAttachment": "添付ファイルを追加"
+      }
+    }
+  },
+  "table": {
+    "newTableLabel": "新しいテーブル",
+    "rename": "名前を変更",
+    "design": "デザイン",
+    "tableRecordHistory": "テーブルレコード履歴",
+    "deleteConfirm": "本当に \"{{tableName}}\" を削除してもよろしいですか?",
+    "dbTableName": "物理データベース内のテーブル名",
+    "schemaName": "物理データベースのスキーマ名",
+    "baseInfo": "ベース情報",
+    "typeOfDatabase": "データベースの種類",
+    "descriptionForTable": "このテーブルの説明",
+    "nameForTable": "このテーブルの名前",
+    "deleteTip1": "この表にリンクされている他の表のリンクフィールドは削除されます",
+    "deleteTip2": "このテーブルは削除後、ごみ箱から復元できます",
+    "operator": {
+      "createBlank": "新しいテーブル"
+    },
+    "actionTips": {
+      "copyAndPasteEnvironment": "コピーと貼り付けはHTTPSまたはローカルホストでのみ機能します",
+      "copyAndPasteBrowser": "このブラウザではコピーと貼り付けはサポートされていません",
+      "copying": "コピー中...",
+      "copySuccessful": "コピー成功",
+      "copyFailed": "コピー失敗",
+      "pasting": "貼り付け中...",
+      "pasteSuccessful": "貼り付け成功",
+      "pasteFailed": "貼り付け失敗",
+      "filling": "入力中...",
+      "fillSuccessful": "入力成功",
+      "fillFailed": "入力失敗",
+      "clearing": "クリア...",
+      "clearSuccessful": "クリア成功",
+      "deleteFieldConfirmTitle": "以下のフィールドを削除します",
+      "deleting": "削除中...",
+      "deleteSuccessful": "削除成功",
+      "pasteFileFailed": "ファイルは添付ファイル欄にのみ貼り付けることができます",
+      "copyError": {
+        "noFocus": "ページをアクティブに保ち、ウィンドウを切り替えないでください"
+      }
+    },
+    "graph": {
+      "tableLabel": "テーブルラベル",
+      "effectCells": "セルに影響を与える可能性があります",
+      "estimatedTime": "推定所要時間",
+      "linkFieldCount": "影響するリンクフィールドの数"
+    },
+    "integrity": {
+      "check": "チェック",
+      "title": "整合性チェック",
+      "loading": "整合性チェック中...",
+      "allGood": "すべて正常です！",
+      "fixIssues": "問題を修正"
+    },
+    "index": {
+      "description": "インデックスは、特に大量のデータ（{{rowCount}}行以上）を扱う場合、検索パフォーマンスを大幅に向上させることができます。ただし、書き込み操作が若干遅くなるというデメリットがあります。頻繁に検索を行う場合や大規模なデータセットがある場合は、インデックスを有効にすることをお勧めします。",
+      "repair": "修復",
+      "repairTip": "インデックスの異常が検出され、検索パフォーマンスが低下する可能性があります。修復ボタンをクリックしてインデックスを修正することをお勧めします。",
+      "enableIndexTip": "インデックスを作成しています。所要時間はテーブルのサイズによって異なります。このプロセス中、テーブルの読み取りと書き込みのパフォーマンスに影響が出る可能性があります。しばらくお待ちください。",
+      "globalSearchTip_infinity": "日付、チェックボックス、ボタンフィールドを除くすべてのフィールドを検索",
+      "globalSearchTip_limited": "日付、チェックボックス、ボタンフィールドを除くすべてのフィールドを検索, 最大 {{count}} フィールド",
+      "autoIndexTip": "テーブルが{{rowCount}}行を超えました。検索パフォーマンスを向上させるため、インデックスの有効化をお勧めします。なお、インデックスを有効にすると書き込み速度が若干低下する可能性があります。インデックス作成中は、テーブルの読み取り/書き込みパフォーマンスが一時的に影響を受ける可能性があります。しばらくお待ちください。",
+      "enableIndex": "有効にする",
+      "keepAsIs": "現状のまま"
+    }
+  },
+  "import": {
+    "title": {
+      "upload": "アップロード",
+      "import": "インポート",
+      "localFile": "ローカルファイル",
+      "linkUrl": "リンク(URL)",
+      "linkUrlInputTitle": "URLからファイルを追加",
+      "importTitle": "新しいテーブルを作成",
+      "incrementImportTitle": "インポート先 — ",
+      "optionsTitle": "インポートオプション",
+      "primitiveFields": "プリミティブフィールド",
+      "importFields": "インポートフィールド",
+      "primaryField": "プライマリーフィールド",
+      "tipsTitle": "ヒント",
+      "confirm": "確認して続行"
+    },
+    "menu": {
+      "addFromOtherSource": "他のソースから追加",
+      "excelFile": "Microsoft Excelル",
+      "csvFile": "CSVファイル",
+      "importCsvData": "CSVデータをインポート",
+      "importExcelData": "Microsoft Excelデータをインポート",
+      "cancel": "キャンセル",
+      "leave": "離れる",
+      "downAsCsv": "csvをダウンロード",
+      "importData": "データをインポート",
+      "duplicate": "複製",
+      "duplicating": "複製中...",
+      "duplicateSuccess": "複製しました",
+      "duplicateFailed": "複製に失敗しました",
+      "importing": "インポート中",
+      "includeRecords": "レコードを含む"
+    },
+    "tips": {
+      "importWayTip": "クリックまたはこの領域にドラッグしてファイルをアップロードします",
+      "leaveTip": "データは引き続きインポートされます。",
+      "fileExceedSizeTip": "このタイプのファイルサイズは制限を超えています",
+      "analyzing": "分析",
+      "notSupportFieldType": "フィールドタイプはサポートされていません",
+      "resultEmpty": "結果が見つかりませんでした。",
+      "searchPlaceholder": "検索...",
+      "importAlert": "インポートが開始されると、正常に完了するか失敗により終了するまで停止することはできません。インポート プロセスの結果は、完了すると通知されます。インポート中はテーブルを使用しないでください。エラーが発生する可能性があります。",
+      "noTips": "次回から表示しない"
+    },
+    "options": {
+      "autoSelectFieldOptionName": "フィールドタイプの自動選択",
+      "useFirstRowAsHeaderOptionName": "最初の行をヘッダーとして使用",
+      "importDataOptionName": "データをインポート",
+      "sheetKey": "シート名: ",
+      "excludeFirstRow": "インポート時に最初の行を除外する"
+    },
+    "form": {
+      "defaultFieldName": "Field",
+      "error": {
+        "urlEmptyTip": "URLは空にできません！",
+        "errorFileFormat": "ファイル形式が正しくありません！",
+        "uniqueFieldName": "フィールド名は固有である必要があります！",
+        "fieldNameEmpty": "フィールド名は空にできません！",
+        "atLeastAImportField": "少なくとも1つはインポートフィールドを設定してください",
+        "urlValidateTip": "URL を解析できませんでした。別の URL を試してください！"
+      },
+      "option": {
+        "doNotImport": "インポートしない"
+      }
+    }
+  },
+  "export": {
+    "menu": {
+      "exportCsv": "CSVをダウンロード"
+    }
+  },
+  "grid": {
+    "prefillingRowTitle": "新しいレコードを追加",
+    "prefillingRowTooltip": "以下に新しいレコードデータを入力してください。この行の外側をクリックすると、レコードは自動的に保存されます。",
+    "presortRowTitle": "このレコードはフィルタリングまたは並べ替えルールにより変更されました"
+  },
+  "form": {
+    "fieldsManagement": "フィールド",
+    "addAll": "すべて追加",
+    "removeAll": "すべて削除",
+    "hideFieldTip": "ここまでフィールドを非表示にする",
+    "unableAddFieldTip": "このタイプのフィールドを追加できません",
+    "removeFromFormTip": "フォームから削除",
+    "descriptionPlaceholder": "説明から入力",
+    "dragToFormTip": "フィールドをここにドラッグしてフォームに追加します",
+    "protectedFieldTip": "このフィールドは「必須」フィールドに設定されており、フォームビューで削除することはできません。フィールド設定で変更してください。"
+  },
+  "kanban": {
+    "toolbar": {
+      "hideFieldName": "フィールド名を非表示",
+      "customizeCards": "カードをカスタマイズする",
+      "stackedBy": "<0/> でスタック",
+      "chooseStackingField": "スタッキングフィールドを選択",
+      "chooseStackingFieldDescription": "カンバンを設定するためにどのフィールドを使用しますか？レコードはこのフィールドに基づいてスタックされます。",
+      "hideEmptyStack": "空のスタックを非表示",
+      "imageSetting": "画像設定",
+      "fit": "フィット",
+      "noImage": "画像がありません",
+      "chooseAttachmentField": "添付ファイルフィールドを選択"
+    },
+    "stack": {
+      "addStack": "スタックを追加",
+      "noCards": "カードがありません",
+      "uncategorized": "未分類"
+    },
+    "stackMenu": {
+      "collapseStack": "スタックを折りたたむ",
+      "renameStack": "スタックの名前を変更する",
+      "deleteStack": "スタックを削除"
+    },
+    "cardMenu": {
+      "insertCardAbove": "カードを上に挿入",
+      "insertCardBelow": "カードを下に挿入",
+      "expandCard": "カードを展開",
+      "deleteCard": "カードを削除",
+      "duplicateCard": "カードを複製"
+    }
+  },
+  "calendar": {
+    "toolbar": {
+      "config": "カレンダー設定",
+      "startDateField": "開始日付フィールド",
+      "endDateField": "終了日付フィールド",
+      "titleField": "タイトルフィールド",
+      "colorField": "色フィールド",
+      "colorType": "色表示",
+      "customColor": "カスタマイズ",
+      "alignWithRecords": "レコードに合わせる"
+    },
+    "placeholder": {
+      "selectColorField": "色フィールドを選択"
+    },
+    "dialog": {
+      "startDate": "開始日付",
+      "endDate": "終了日付",
+      "notAdd": "追加しない",
+      "addDateField": "日付フィールドを追加",
+      "content": "カレンダービューを作成し、テーブルには開始日付と終了日付の2つの日付フィールドが必要です"
+    },
+    "moreLinkText": "すべての {{count}} レコードを表示"
+  },
+  "menu": {
+    "insertRecordAbove": "レコードを上に挿入",
+    "insertRecordBelow": "レコードを下に挿入",
+    "copyCells": "セルのコピー",
+    "deleteRecord": "レコードを削除",
+    "deleteAllSelectedRecords": "選択したすべてのレコードを削除",
+    "editField": "フィールドを編集",
+    "insertFieldLeft": "左に挿入",
+    "insertFieldRight": "右に挿入",
+    "freezeUpField": "このフィールドまでフリーズ",
+    "hideField": "フィールドを非表示",
+    "deleteField": "フィールドを削除",
+    "deleteAllSelectedFields": "選択したすべてのフィールドを削除",
+    "autoFill": "すべてのレコードを更新",
+    "groupMenuTitle": "グループメニュー",
+    "expandGroup": "このグループとそのサブグループを展開",
+    "collapseGroup": "このグループとそのサブグループを折りたたむ",
+    "expandAllGroups": "すべてのグループを展開",
+    "collapseAllGroups": "すべてのグループを折りたたむ"
+  },
+  "connection": {
+    "title": "データベース接続",
+    "description": "データベース接続を介して、現在のベースにあるすべてのテーブルを含むデータベースに直接アクセスできます。",
+    "noPermission": "データベースにアクセスする権限がありません",
+    "connectionCountTip": "データベース接続の最大数は <b>{{max}}</b> で、現在の接続数は <b>{{current}}</b> です",
+    "createFailed": "PUBLIC_DATABASE_PROXY 環境変数が正しく設定されていることを確認してください",
+    "helpLink": "https://help.teable.ai/en/deploy/database-connection"
+  },
+  "view": {
+    "addRecord": "レコードを追加",
+    "searchView": "ビューを検索...",
+    "dragToolTip": "自動並べ替えがオンになっており、手動ドラッグは利用できません",
+    "insertToolTip": "自動並べ替えがオンになっているため、順序付き挿入は利用できません",
+    "action": {
+      "rename": "ビューの名前を変更",
+      "duplicate": "ビューを複製",
+      "delete": "ビューの削除",
+      "lock": "ビューをロック",
+      "unlock": "ビューをロック解除",
+      "enable": "有効"
+    },
+    "category": {
+      "table": "グリッドビュー",
+      "form": "フォームビュー",
+      "kanban": "カンバンビュー",
+      "gallery": "ギャラリービュー",
+      "calendar": "カレンダービュー"
+    },
+    "crash": {
+      "title": "クラッシュしました！",
+      "description": "このビューは壊れています。それでも更新が失敗する場合は、お問い合わせください。support@teable.ai"
+    },
+    "locked": {
+      "tip": "このビューはロックされています。個人モードを有効にしてビューオプションを編集し、変更は自分にのみ適用されます。"
+    },
+    "noView": "ビューがありません"
+  },
+  "lastModifiedTime": "最終更新日時",
+  "lastModify": "最終更新: ",
+  "tableTrash": {
+    "title": "テーブルのごみ箱",
+    "resourceType": "リソースタイプ",
+    "deletedResource": "削除されたリソース"
+  },
+  "baseShare": {
+    "title": "ベースを共有",
+    "shareTitle": "共有",
+    "shareToWeb": "ウェブに共有",
+    "description": "「{{baseName}}」を他の人と共有",
+    "nodeShareDescription": "「{{nodeName}}」とその内容を共有",
+    "shareLinks": "共有リンク",
+    "newLink": "新しいリンク",
+    "noShareLinks": "共有リンクはまだありません",
+    "createFirstLink": "共有リンクを作成",
+    "editSettings": "設定を編集",
+    "refreshLink": "リンクを再生成",
+    "deleteLink": "リンクを削除",
+    "deleteConfirmTitle": "共有リンクを削除",
+    "deleteConfirmDescription": "この操作は元に戻せません。このリンクを持つ人は共有ベースにアクセスできなくなります。",
+    "createSuccess": "共有リンクが作成されました",
+    "createFailed": "共有リンクの作成に失敗しました",
+    "updateSuccess": "共有設定が更新されました",
+    "updateFailed": "共有設定の更新に失敗しました",
+    "deleteSuccess": "共有リンクが削除されました",
+    "deleteFailed": "共有リンクの削除に失敗しました",
+    "refreshSuccess": "共有リンクが再生成されました",
+    "refreshFailed": "共有リンクの再生成に失敗しました",
+    "copied": "リンクがクリップボードにコピーされました",
+    "shareLink": "共有リンク",
+    "passwordProtection": "パスワード保護",
+    "enterPassword": "パスワードを入力",
+    "selectNodes": "テーブルを選択",
+    "shareEntireBase": "ベース全体を共有",
+    "shareSelectedNodes": "選択したノードを共有",
+    "shareEntireBaseDescription": "このベースに追加された新しいテーブルとフォルダは自動的に共有されます",
+    "noNodesSelectedWarning": "共有するノードを少なくとも1つ選択してください",
+    "allowSave": "スペースに保存を許可",
+    "allowSaveDescription": "閲覧者がこのベースのコピーを自分のスペースに保存することを許可",
+    "allowCopy": "データのコピーを許可",
+    "allowCopyData": "閲覧者がデータをコピーすることを許可",
+    "allowDuplicate": "閲覧者に複製を許可",
+    "allowCopyDescription": "閲覧者がこの共有ベースからテーブルデータをコピーすることを許可",
+    "selectedNodes": "{{count}}個のテーブルが選択されました",
+    "allNodes": "すべてのテーブル",
+    "sharedNode": "共有ノード",
+    "sharedNodeDescription": "この共有リンクは特定のノードとその子孫用です",
+    "publicShareTitle": "リンクによる公開共有",
+    "publicShareCount": "{{count}}個の公開共有リンク",
+    "noPublicShare": "公開共有リンクはありません",
+    "security": "セキュリティ",
+    "restrictByPassword": "パスワードで制限",
+    "advanced": "詳細設定",
+    "embedConfig": "埋め込み設定",
+    "appPublicLink": "アプリ公開リンク",
+    "appNotPublished": "このアプリはまだ公開されていません。共有する前にまずアプリを公開してください。",
+    "goToPublish": "公開へ",
+    "publishSuccess": "アプリが正常に公開されました",
+    "publishFailed": "アプリの公開に失敗しました",
+    "openLink": "リンクを開く",
+    "appPublished": "アプリが公開されました"
+  },
+  "aiChat": {
+    "tool": {
+      "getTableFields": "テーブルフィールドを取得",
+      "getTablesMeta": "テーブルメタデータを取得",
+      "sqlQuery": "SQL クエリを実行",
+      "generateScriptAction": "スクリプトアクションを生成",
+      "getScriptInput": "スクリプト入力を取得",
+      "getTeableApi": "API を取得",
+      "dataVisualization": "データ可視化",
+      "updateBase": "データベース情報を更新",
+      "args": "引数",
+      "result": "結果",
+      "thinking": "思考中...",
+      "toBeConfirmed": "確認待ち",
+      "errorMessage": "エラーメッセージ",
+      "confirm": "確認",
+      "createRecordsSuccess": "{{count}} 件のレコードを正常に作成しました",
+      "createRecordsFailed": "レコードの作成に失敗しました",
+      "updateRecordsSuccess": "{{count}} 件のレコードを正常に更新しました",
+      "updateRecordsFailed": "レコードの更新に失敗しました",
+      "generatingRecords": "{{count}} 件のレコードを生成中...",
+      "creatingRecords": "{{count}} 件のレコードを作成中...",
+      "updatingRecords": "{{count}} 件のレコードを更新中...",
+      "recordsPreview": "レコードプレビュー",
+      "andMoreRecords": "さらに {{count}} 件...",
+      "unknownError": "不明なエラー",
+      "recordIds": "レコードID",
+      "records": "件のレコード",
+      "viewAll": "すべて表示",
+      "showLess": "折りたたむ",
+      "generatingData": "データを生成中...",
+      "generatingUpdates": "更新を生成中...",
+      "recordsGenerated": "{{count}} 件のレコードを生成しました",
+      "recordsCount": "レコード（{{count}}）",
+      "fieldsCount": "フィールド（{{count}}）",
+      "fieldsGenerated": "{{count}} 件のフィールドを生成しました",
+      "updatedProperties": "更新済み（{{count}}）",
+      "configured": "設定済み",
+      "recordsToUpdate": "更新対象 {{count}} 件のレコード",
+      "showingLast": "最後の {{count}} 件",
+      "recordLabel": "レコード",
+      "statusGenerating": "生成中...",
+      "statusCreating": "作成中...",
+      "statusUpdating": "更新中...",
+      "statusCreated": "作成済み",
+      "statusUpdated": "更新済み",
+      "getApps": {
+        "title": "アプリ一覧",
+        "loading": "アプリを読み込み中...",
+        "foundApps": "{{count}} 件のアプリが見つかりました",
+        "noApps": "このベースにアプリはありません",
+        "openApp": "アプリを開く"
+      },
+      "generateApp": {
+        "title": "アプリビルダー",
+        "creatingApp": "アプリを作成中",
+        "updatingApp": "アプリを更新中",
+        "generatingApp": "アプリを生成中",
+        "generating": "生成中...",
+        "openApp": "アプリを開く",
+        "viewProgress": "進行状況を表示",
+        "newApp": "新規アプリ",
+        "building": "ビルド中..."
+      },
+      "generateAutomation": {
+        "title": "オートメーションビルダー",
+        "creatingAutomation": "オートメーションを作成中",
+        "updatingAutomation": "オートメーションを更新中",
+        "generatingAutomation": "オートメーションを構築中",
+        "building": "ビルド中...",
+        "openAutomation": "オートメーションを開く",
+        "viewProgress": "進行状況を表示",
+        "testResults": "テスト結果",
+        "triggerTest": "トリガー",
+        "actionTest": "アクション {{index}}"
+      },
+      "htmlPreview": {
+        "preview": "プレビュー",
+        "code": "コード",
+        "download": "ダウンロード",
+        "downloadHtml": "HTML",
+        "downloadImage": "画像（PNG）",
+        "copy": "コピー",
+        "copied": "コピーしました！",
+        "fullscreen": "全画面",
+        "exitFullscreen": "全画面を終了",
+        "downloadSuccess": "画像を正常にダウンロードしました",
+        "downloadFailed": "画像のキャプチャに失敗しました",
+        "iframeFailed": "キャプチャに失敗：iframe にアクセスできません"
+      },
+      "loadAttachment": {
+        "title": "添付ファイルを読み込み",
+        "loading": "添付ファイルを読み込み中",
+        "failed": "添付ファイルの読み込みに失敗しました",
+        "empty": "添付ファイルが読み込まれていません",
+        "modeNative": "AI Vision",
+        "modeNativeDesc": "AIネイティブコンテキストに読み込み済み",
+        "modeExtracted": "テキスト抽出",
+        "modeExtractedDesc": "ファイル内容を解析してテキストとして抽出",
+        "visionLoaded": "視覚分析用に読み込み済み",
+        "pdfLoaded": "PDF分析用に読み込み済み",
+        "textExtracted": "{{chars}} 文字を抽出しました",
+        "contextLoaded": "AIコンテキストに読み込み済み",
+        "truncated": "切り詰め済み",
+        "preview": "プレビュー"
+      },
+      "textExtract": {
+        "title": "テキスト抽出",
+        "loading": "テキストを抽出中",
+        "failed": "テキストの抽出に失敗しました",
+        "empty": "テキストが抽出されていません",
+        "preview": "プレビュー",
+        "truncated": "切り詰め済み",
+        "previews": "件のプレビュー",
+        "chars": "{{chars}} 文字",
+        "totalCharacters": "合計: {{chars}} 文字",
+        "filesTruncated": "（{{count}} 件のファイルを切り詰めました）"
+      },
+      "importExcel": {
+        "title": "Excelをインポート",
+        "loading": "ファイルを処理中...",
+        "failed": "インポートに失敗しました",
+        "suggestions": "提案",
+        "analyzeComplete": "分析完了",
+        "worksheets": "ワークシート",
+        "columns": "列",
+        "importComplete": "インポート完了",
+        "stageAnalyze": "分析中",
+        "stageImport": "インポート中"
+      }
+    },
+    "tools": {
+      "getTeableApi": "Teable APIを取得",
+      "readFiles": "ファイルを読み取り",
+      "writeFile": "ファイルを書き込み",
+      "deleteFiles": "ファイルを削除",
+      "listFiles": "ファイル一覧",
+      "addDependencies": "依存関係を追加",
+      "checkBuildErrors": "ビルドエラーを確認",
+      "lint": "コードをリント"
+    },
+    "fallback": {
+      "previewLoadFailed": "プレビューの読み込みに失敗しました",
+      "retry": "{{count}} 回再試行",
+      "chatAborted": "中止されました"
+    },
+    "preview": {
+      "deletedTable": "削除されたテーブル",
+      "deletedView": "削除されたビュー",
+      "deletedField": "削除されたフィールド",
+      "deletedRecords": "削除されたレコード"
+    },
+    "agentName": {
+      "tableOperatorAgent": "テーブルエージェント",
+      "viewOperatorAgent": "ビューエージェント",
+      "fieldOperatorAgent": "フィールドエージェント",
+      "recordOperatorAgent": "レコードエージェント",
+      "buildBaseAgent": "ベース構築エージェント",
+      "buildAutomationAgent": "オートメーション構築エージェント"
+    },
+    "confirm": {
+      "toBeConfirmed": "確認待ち",
+      "deleteWarning": "削除してもよろしいですか？"
+    },
+    "action": {
+      "createTable": "テーブルを作成",
+      "updateTable": "テーブルを更新",
+      "updateTableName": "テーブル名を更新",
+      "deleteTable": "テーブルを削除",
+      "createView": "ビューを作成",
+      "updateView": "ビューを更新",
+      "updateViewName": "ビュー名を更新",
+      "deleteView": "ビューを削除",
+      "createField": "フィールドを作成",
+      "createAiField": "AIフィールドを作成",
+      "createLinkField": "リンクフィールドを作成",
+      "createLookupField": "ルックアップフィールドを作成",
+      "createRollupField": "ロールアップフィールドを作成",
+      "createFormulaField": "数式フィールドを作成",
+      "deleteField": "フィールドを削除",
+      "updateField": "フィールドを更新",
+      "createRecord": "レコードを作成",
+      "createRecords": "レコードを作成",
+      "deleteRecord": "レコードを削除",
+      "updateRecord": "レコードを更新",
+      "updateRecords": "レコードを更新",
+      "updateBase": "データベース情報を更新",
+      "planTask": "タスクを計画中...",
+      "generateTables": "テーブルを生成",
+      "generatePrimaryFields": "主キーフィールドを生成",
+      "generateFields": "フィールドを生成",
+      "generateViews": "ビューを生成",
+      "generateRecords": "レコードを生成",
+      "generateAIFields": "AIフィールドを生成",
+      "generateLinkFields": "リンクフィールドを生成",
+      "generateLookupFields": "ルックアップフィールドを生成",
+      "generateRollupFields": "ロールアップフィールドを生成",
+      "generateFormulaFields": "数式フィールドを生成",
+      "generateWorkflow": "ワークフローを生成",
+      "generateTrigger": "トリガーを生成",
+      "generateScriptAction": "スクリプトアクションノードを生成",
+      "generateSendMailAction": "メール送信ノードを生成",
+      "generateAction": "アクションノードを生成",
+      "setupAutomationTrigger": "オートメーショントリガーを設定",
+      "testAutomationNode": "オートメーションノードをテスト",
+      "activateAutomation": "オートメーションを有効化",
+      "executeScript": "スクリプトを実行",
+      "wait": "待機",
+      "generateScriptFlowChart": "スクリプトフローチャートを生成",
+      "triggerAiFill": "AI入力をトリガー",
+      "initialize": "環境を初期化",
+      "rename": "アプリ名を生成",
+      "buildTest": "テストを作成",
+      "developTask": "タスクを開発",
+      "generateSummary": "サマリーを生成",
+      "previewEnvironment": "プレビュー環境を準備",
+      "getRelativeData": "関連データを取得",
+      "getPreviousNodeOutputVariables": "前のノードの出力変数を取得",
+      "getApiJson": "API情報を取得",
+      "generateScriptAndDependencies": "スクリプトと依存関係を生成",
+      "analyzingAttachment": "添付ファイルを分析中...",
+      "locateResource": "検索",
+      "goTo": "移動",
+      "operationSuccess": "操作が正常に完了しました",
+      "operationFailed": "操作に失敗しました"
+    },
+    "aiFill": {
+      "processedRecords": "{{count}} 件のレコードがAI生成のキューに入りました"
+    },
+    "queryTool": {
+      "getRecords": "レコードを取得",
+      "getRecordsWithTable": "レコードを取得 · {{tableName}}",
+      "getFields": "フィールドを取得",
+      "getFieldsWithTable": "フィールドを取得 · {{tableName}}",
+      "getTables": "テーブルを取得",
+      "getViews": "ビューを取得",
+      "getViewsWithTable": "ビューを取得 · {{tableName}}",
+      "sqlQuery": "SQLクエリ",
+      "querying": "クエリ中...",
+      "queryFailed": "クエリに失敗しました",
+      "aborted": "中止されました",
+      "noData": "データが返されませんでした",
+      "dataFormatError": "データ形式エラー",
+      "unsupportedQueryType": "サポートされていないクエリタイプ: {{toolName}}",
+      "returnedRecords": "{{count}} 件のレコードを返しました",
+      "record": "レコード {{index}}",
+      "moreRecords": "... +{{count}} 件のレコード",
+      "foundFields": "{{count}} 件のフィールドが見つかりました",
+      "moreFields": "... +{{count}} 件のフィールド",
+      "foundTables": "{{count}} 件のテーブルが見つかりました",
+      "moreTables": "... +{{count}} 件のテーブル",
+      "foundViews": "{{count}} 件のビューが見つかりました",
+      "moreViews": "... +{{count}} 件のビュー",
+      "queryReturned": "クエリ結果: {{rowCount}} 行 × {{columnCount}} 列",
+      "row": "行 {{index}}",
+      "moreRows": "... +{{count}} 行",
+      "getDoc": "ドキュメントを取得",
+      "getDocWithTopic": "ドキュメントを取得 · {{topic}}",
+      "getAutomations": "オートメーションを取得",
+      "getAutomation": "オートメーションを取得",
+      "getAutomationRuns": "オートメーション実行を取得",
+      "foundAutomations": "{{count}} 件のオートメーションが見つかりました",
+      "moreAutomations": "... +{{count}} 件のオートメーション",
+      "foundRuns": "{{count}} 件の実行が見つかりました",
+      "moreRuns": "... +{{count}} 件の実行",
+      "active": "有効",
+      "trigger": "トリガー",
+      "actions": "{{count}} 件のアクション",
+      "moreActions": "... +{{count}} 件のアクション",
+      "getUserIntegrations": "連携を確認",
+      "connectedIntegrations": "接続済み",
+      "availableToConnect": "接続可能",
+      "connect": "接続",
+      "noIntegrationsAvailable": "利用可能な連携がありません",
+      "activateTool": "ツールを有効化",
+      "webSearch": "ウェブ検索",
+      "webSearchResults": "{{count}} 件の結果が見つかりました",
+      "webSearchCompleted": "検索完了",
+      "searchApi": "APIを検索",
+      "searchApiWithQuery": "API検索 · {{query}}",
+      "noApiFound": "APIが見つかりません",
+      "foundApis": "{{count}} 件のAPIが見つかりました",
+      "totalApis": "合計 {{count}} 件のAPIが利用可能",
+      "callApi": "APIを呼び出し",
+      "callApiWithMethod": "{{method}} {{path}}...",
+      "response": "レスポンス",
+      "success": "成功",
+      "failed": "失敗",
+      "inputData": "入力データ",
+      "availableNodes": "利用可能なノード",
+      "hasPreviousCode": "既存のコードあり",
+      "noInputData": "入力データがありません"
+    },
+    "showUI": {
+      "connect": "接続",
+      "connecting": "接続中...",
+      "connected": "接続済み",
+      "connectToUse": "オートメーションで使用するには {{provider}} に接続してください",
+      "checkingConnection": "接続状態を確認中...",
+      "confirm": "確認",
+      "confirmed": "確認済み",
+      "cancel": "キャンセル",
+      "cancelled": "キャンセル済み",
+      "connectionCancelled": "接続がキャンセルされました"
+    },
+    "codeBlock": {
+      "hiddenLines": "{{count}} 行が非表示",
+      "collapseCode": "コードを折りたたむ",
+      "code": "コード",
+      "preview": "プレビュー"
+    },
+    "buildFlow": {
+      "progress": "ビルド進捗",
+      "completed": "アプリのビルドが完了しました",
+      "completedDesc": "すべてのステップが正常に完了し、プレビュー可能です",
+      "stepStatus": {
+        "initializing": "アプリを作成し、環境を初期化中...",
+        "naming": "アプリ名を生成中...",
+        "planning": "要件を分析し、開発計画を策定中...",
+        "developing": "コードを記述し、機能を実装中...",
+        "summarizing": "開発結果を整理中...",
+        "deploying": "プレビュー環境にデプロイ中...",
+        "testing": "テストを作成中..."
+      },
+      "moduleStatus": {
+        "running": "実行中",
+        "completed": "完了",
+        "error": "失敗",
+        "pending": "保留中"
+      },
+      "toolStatus": {
+        "running": "実行中",
+        "completed": "完了",
+        "error": "失敗"
+      }
+    },
+    "generateScript": {
+      "generateSuccess": "スクリプトの生成に成功しました"
+    },
+    "buildBase": {
+      "title": "ベースを構築",
+      "generateSuccess": "データベースの生成に成功しました",
+      "generateError": "データベースの生成に失敗しました"
+    },
+    "buildAutomation": {
+      "title": "オートメーションを構築",
+      "generateSuccess": "オートメーションの生成に成功しました"
+    },
+    "automation": {
+      "created": "作成済み",
+      "updated": "更新済み",
+      "workflow": "ワークフロー",
+      "trigger": "トリガー",
+      "scriptAction": "スクリプトアクション",
+      "workflowLabel": "ワークフロー",
+      "triggerLabel": "トリガー",
+      "scriptActionLabel": "スクリプトアクション",
+      "workflowId": "ワークフロー",
+      "triggerId": "トリガー",
+      "scriptActionId": "スクリプトアクション",
+      "viewAutomation": "表示",
+      "navigateToAutomation": "オートメーションに移動",
+      "triggerType": {
+        "recordCreated": "レコード作成時",
+        "recordUpdated": "レコード更新時",
+        "recordCreatedOrUpdated": "レコード作成または更新時",
+        "formSubmitted": "フォーム送信時",
+        "scheduledTime": "スケジュール時刻",
+        "buttonClick": "ボタンクリック"
+      },
+      "activated": "有効化済み",
+      "deactivated": "無効化済み",
+      "discarded": "変更を破棄しました",
+      "activateFailed": "有効化に失敗",
+      "deactivateFailed": "無効化に失敗",
+      "discardFailed": "破棄に失敗",
+      "scriptUpdated": "スクリプトが更新されました",
+      "scriptUpdateFailed": "更新に失敗",
+      "scriptExecuted": "スクリプトが実行されました",
+      "scriptExecutionFailed": "実行に失敗",
+      "scriptReady": "スクリプト準備完了",
+      "executingScript": "スクリプトを実行中...",
+      "waitedSeconds": "{{seconds}}秒待機しました",
+      "waitFailed": "待機に失敗",
+      "flowchartGenerated": "フローチャートが生成されました",
+      "flowchartGenerationFailed": "生成に失敗"
+    },
+    "newChat": "新しいチャット",
+    "clearChat": "チャットをクリア",
+    "expand": "展開",
+    "history": "履歴",
+    "close": "折りたたむ",
+    "clearChatConfirmTitle": "チャットのクリアを確認",
+    "clearChatConfirmDesc": "現在のチャット内容は保存されません。本当にクリアしますか？",
+    "dontShowAgain": "今後表示しない",
+    "noModel": "利用可能なモデルがありません",
+    "addAttachment": "添付ファイルを追加",
+    "noHistory": "チャット履歴がありません",
+    "noFoundHistory": "チャット履歴が見つかりません。新しいチャットを開始してください",
+    "timeGroup": {
+      "today": "今日",
+      "oneWeek": "1週間",
+      "twoWeek": "2週間",
+      "oneMonth": "1ヶ月",
+      "other": "その他"
+    },
+    "context": {
+      "button": "コンテキストを追加",
+      "search": "テーブルを追加",
+      "searchEmpty": "一致するコンテキストが見つかりません",
+      "emptyContext": "追加するコンテキストがありません"
+    },
+    "inputPlaceholder": "メッセージを送信...",
+    "thought": "思考中",
+    "meta": {
+      "timeCostUnit": "s",
+      "timeCostDescription": "生成時間: {{timeCost}}s",
+      "creditDescription": "{{credits}} クレジット使用済み",
+      "tokenDescription": "トークン使用数: {{tokens}}",
+      "input": "入力",
+      "output": "出力",
+      "tokens": "トークン",
+      "totalTimeCost": "合計所要時間",
+      "totalCreditCost": "合計クレジット消費",
+      "customModel": "カスタムモデル",
+      "tokenDetails": "トークン詳細",
+      "cachedInput": "キャッシュ入力（90%割引）",
+      "cacheWrite": "キャッシュ書き込み",
+      "reasoning": "推論（思考）",
+      "taskCompleted": "タスク完了"
+    },
+    "dataVisualization": {
+      "error": "データ可視化に失敗しました"
+    },
+    "tips": {
+      "modelTips": "管理者のみが設定できます"
+    },
+    "attachment": {
+      "imageNotSupported": "画像はサポートされていません",
+      "attachmentSizeExceeded": "添付ファイルのサイズが制限（{{size}}MB）を超えています"
+    },
+    "suggestions": {
+      "recommend": "おすすめ",
+      "ask": "質問",
+      "analyze": "分析",
+      "build": "構築",
+      "title": "何をお手伝いしましょうか？",
+      "whatCanIDo": "何ができますか？",
+      "createOrModifyDatabase": "データベースを作成または変更",
+      "buildAutomations": "オートメーションを構築",
+      "buildApps": "アプリを構築",
+      "buildMeCRM": "CRMを構築",
+      "addAIField": "AIフィールドを追加して各顧客を分析",
+      "createDataAnalysis": "データ分析レポートを作成",
+      "emailWhenRecordCreated": "レコード作成時にメール通知",
+      "syncStatusToSlack": "ステータス更新をSlackに同期",
+      "buildDashboard": "このテーブルからダッシュボードを構築",
+      "buildLeadCapture": "リード獲得ランディングページを構築"
+    },
+    "buildApp": {
+      "thinking": {
+        "duration": "{{duration}}秒間思考しました"
+      },
+      "task": {
+        "searching": "「{{query}}」を検索中",
+        "readingFiles": "ファイルを読み取り中:",
+        "foundResults": "{{count}} 件の結果が見つかりました",
+        "noIssuesFound": "問題は見つかりませんでした",
+        "defaultTitle": "タスク"
+      },
+      "codeProject": {
+        "defaultTitle": "コードプロジェクト"
+      }
+    },
+    "scriptPreview": {
+      "aiModelRequired": "プレビューを生成するにはAIモデルが必要です。",
+      "writeCodeHint": "コードを記述してフローチャートのプレビューを確認してください。",
+      "noPreview": "フローチャートのプレビューはありません。",
+      "generatePreview": "プレビューを生成",
+      "analyzing": "スクリプトを分析中...",
+      "codeChanged": "このプレビューが生成されてからコードが変更されました。",
+      "regenerate": "再生成",
+      "refresh": "更新",
+      "regenerating": "再生成中..."
+    }
+  },
+  "download": {
+    "allAttachments": {
+      "title": "すべての添付ファイルをダウンロード",
+      "loading": "プレビューを読み込み中...",
+      "rowsWithAttachments": "{{count}} 行に添付ファイルがあります",
+      "totalAttachments": "{{count}} 個の添付ファイル",
+      "totalSize": "合計サイズ: {{size}}",
+      "startDownload": "ダウンロード開始",
+      "confirmTitle": "{{count}} ファイルをダウンロード",
+      "confirmDescription": "合計サイズ: {{size}}。ファイルはZIPファイルに圧縮されます。",
+      "confirm": "ダウンロード",
+      "cancel": "キャンセル",
+      "downloading": "ダウンロード中...",
+      "downloadingFile": "ダウンロード中: {{fileName}}",
+      "progress": "{{downloaded}} / {{total}}",
+      "completed": "ダウンロード完了",
+      "cancelled": "ダウンロードがキャンセルされました",
+      "noAttachments": "ダウンロードする添付ファイルがありません",
+      "error": "ダウンロード失敗",
+      "errorPartial": "{{failedCount}} ファイルのダウンロードに失敗しました",
+      "requireHttps": "一括ダウンロードにはHTTPSが必要です。HTTPSまたはlocalhostでアクセスしてください。",
+      "advancedOptions": "詳細オプション",
+      "namingFieldLabel": "添付ファイル名のプレフィックス",
+      "selectField": "デフォルト: 添付ファイル番号",
+      "groupByRow": "フォルダにアーカイブ",
+      "groupByRowTip": "行に複数の添付ファイルがある場合、同じフォルダに配置されます。添付ファイルが1つだけの行はフォルダを作成しません。"
+    }
+  }
+}

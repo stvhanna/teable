@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import type { Field, View } from '@prisma/client';
+import type { Field } from '@prisma/client';
 import { PrismaClient } from '@prisma/client';
 import type { IRatingFieldOptions, ISelectFieldOptions } from '@teable/core';
-import { parseDsn, IdPrefix, Colors, FieldType, generateRecordId } from '@teable/core';
+import { parseDsn, Colors, FieldType, generateRecordId } from '@teable/core';
 import * as dotenv from 'dotenv-flow';
 import Knex from 'knex';
 import { chunk, flatten, groupBy } from 'lodash';
@@ -84,15 +84,6 @@ async function generateFieldData(params: {
   }, {});
 }
 
-async function generateViewRowIndex(params: { views: View[]; rowCount: number; i: number }) {
-  const { views, rowCount, i } = params;
-
-  return views.reduce<{ [vieOrderKey: string]: number }>((pre, cur) => {
-    pre[`__row_${cur.id}`] = Number(rowCount) + i;
-    return pre;
-  }, {});
-}
-
 export async function seeding(tableId: string, mockDataNum: number) {
   const databaseUrl = process.env.PRISMA_DATABASE_URL!;
   console.log('database-url: ', databaseUrl);
@@ -123,7 +114,6 @@ export async function seeding(tableId: string, mockDataNum: number) {
       deletedTime: null,
     },
   });
-
   await rectifyField(prisma, fields, selectOptions);
 
   const { dbTableName, name: tableName } = await prisma.tableMeta.findUniqueOrThrow({
@@ -132,20 +122,14 @@ export async function seeding(tableId: string, mockDataNum: number) {
   });
   console.log(`Table: ${tableName}, mockDataNum: ${mockDataNum}`);
 
-  const views = await prisma.view.findMany({ where: { tableId } });
   const knex = Knex({
     client: driver,
   });
-
-  const [{ count: rowCount }] = await prisma.$queryRawUnsafe<{ count: number }[]>(
-    knex(dbTableName).count({ count: '*' }).toQuery()
-  );
 
   console.time(`Table: ${tableName}, Ready Install Data`);
   const data: { [dbFieldName: string]: unknown }[] = [];
   for (let i = 0; i < mockDataNum; i++) {
     const fieldData = await generateFieldData({ mockDataNum, fields, selectOptions });
-    const viewRowIndex = await generateViewRowIndex({ views, rowCount, i: i + 1 });
 
     data.push({
       __id: generateRecordId(),
@@ -153,7 +137,6 @@ export async function seeding(tableId: string, mockDataNum: number) {
       __created_by: 'admin',
       __last_modified_by: 'admin',
       __version: 1,
-      ...viewRowIndex,
       ...fieldData,
     });
   }
@@ -173,26 +156,7 @@ export async function seeding(tableId: string, mockDataNum: number) {
           .replace(/'null'/g, 'null')} 
       `;
 
-    const sqlOp = `
-        INSERT INTO ops
-        ("collection", "doc_id", "doc_type", "version", "operation", "created_by")
-        VALUES
-        ${page
-          .map((d) => {
-            return {
-              collection: tableId,
-              doc_id: d.__id,
-              doc_type: IdPrefix.Record,
-              version: 0,
-              operation: '{}',
-              created_by: 'mock',
-            };
-          })
-          .map((d) => `('${Object.values(d).join(`', '`)}')`)
-          .join(', ')}
-      `;
-
-    return [prisma.$executeRawUnsafe(sql), prisma.$executeRawUnsafe(sqlOp)];
+    return [prisma.$executeRawUnsafe(sql)];
   });
 
   await prisma.$transaction(flatten(promises));

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import Joi from 'joi';
 
 export const envValidationSchema = Joi.object({
@@ -14,12 +15,9 @@ export const envValidationSchema = Joi.object({
   // database_url
   PRISMA_DATABASE_URL: Joi.string().required(),
 
-  ASSET_PREFIX: Joi.string().uri().optional(),
   STORAGE_PREFIX: Joi.string().uri().optional(),
 
-  PUBLIC_ORIGIN: Joi.string().uri(),
-
-  BRAND_NAME: Joi.string().required(),
+  PUBLIC_ORIGIN: Joi.string().uri().required(),
 
   // cache
   BACKEND_CACHE_PROVIDER: Joi.string().valid('memory', 'sqlite', 'redis').default('sqlite'),
@@ -37,4 +35,25 @@ export const envValidationSchema = Joi.object({
       .pattern(/^(redis:\/\/|rediss:\/\/)/)
       .message('Cache `redis` the URI must start with the protocol `redis://` or `rediss://`'),
   }),
+  // github auth
+  BACKEND_GITHUB_CLIENT_ID: Joi.when('SOCIAL_AUTH_PROVIDERS', {
+    is: Joi.string()
+      .regex(/(^|,)(github)(,|$)/)
+      .required(),
+    then: Joi.string().required().messages({
+      'any.required':
+        'The `BACKEND_GITHUB_CLIENT_ID` is required when `SOCIAL_AUTH_PROVIDERS` includes `github`',
+    }),
+  }),
+  BACKEND_GITHUB_CLIENT_SECRET: Joi.when('SOCIAL_AUTH_PROVIDERS', {
+    is: Joi.string()
+      .regex(/(^|,)(github)(,|$)/)
+      .required(),
+    then: Joi.string().required().messages({
+      'any.required':
+        'The `BACKEND_GITHUB_CLIENT_SECRET` is required when `SOCIAL_AUTH_PROVIDERS` includes `github`',
+    }),
+  }),
+
+  PASSWORD_LOGIN_DISABLED: Joi.string().equal('true').optional(),
 });

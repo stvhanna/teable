@@ -1,39 +1,46 @@
-import type { IRecord } from '@teable/core';
-import { Separator, Skeleton } from '@teable/ui-lib';
-import classNames from 'classnames';
+import type { IAttachmentCellValue, IRecord } from '@teable/core';
+import { Skeleton, cn } from '@teable/ui-lib';
 import { isEqual } from 'lodash';
-import { useMemo } from 'react';
-import { useMeasure } from 'react-use';
+import { useCallback, useMemo } from 'react';
+import { useTranslation } from '../../context/app/i18n';
+import type { IButtonClickStatusHook } from '../../hooks';
 import {
   useFields,
   useIsTouchDevice,
   useRecord,
-  useTablePermission,
   useViewId,
   useViews,
+  useTableId,
+  useBaseId,
+  useTablePermission,
 } from '../../hooks';
-import type { GridView } from '../../model';
+import type { GridView, IFieldInstance } from '../../model';
+import { CommentPanel } from '../comment';
 import { ExpandRecordHeader } from './ExpandRecordHeader';
-import { ExpandRecordRight } from './ExpandRecordRight';
 import { ExpandRecordWrap } from './ExpandRecordWrap';
 import { RecordEditor } from './RecordEditor';
-import { IExpandRecordModel } from './type';
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const MIN_SHOW_ACTIVITY_WIDTH = 700;
+import { RecordHistory } from './RecordHistory';
+import { ExpandRecordModel } from './type';
 
 interface IExpandRecordProps {
   recordId: string;
   recordIds?: string[];
+  commentId?: string;
   visible?: boolean;
-  model?: IExpandRecordModel;
+  model?: ExpandRecordModel;
   serverData?: IRecord;
-  showActivity?: boolean;
+  recordHistoryVisible?: boolean;
+  commentVisible?: boolean;
   onClose?: () => void;
   onPrev?: (recordId: string) => void;
   onNext?: (recordId: string) => void;
   onCopyUrl?: () => void;
-  onShowActivity?: () => void;
+  onRecordHistoryToggle?: () => void;
+  onCommentToggle?: () => void;
+  onDelete?: () => Promise<void>;
+  onDuplicate?: () => Promise<void>;
+  buttonClickStatusHook?: IButtonClickStatusHook;
+  onAttachmentDownload?: (attachments: IAttachmentCellValue) => void;
 }
 
 export const ExpandRecord = (props: IExpandRecordProps) => {
@@ -41,33 +48,56 @@ export const ExpandRecord = (props: IExpandRecordProps) => {
     model,
     visible,
     recordId,
+    commentId,
     recordIds,
     serverData,
-    showActivity,
+    recordHistoryVisible,
+    commentVisible,
     onPrev,
     onNext,
     onClose,
     onCopyUrl,
-    onShowActivity,
+    onRecordHistoryToggle,
+    onCommentToggle,
+    onDelete,
+    onDuplicate,
+    buttonClickStatusHook,
+    onAttachmentDownload,
   } = props;
   const views = useViews() as (GridView | undefined)[];
+  const tableId = useTableId();
   const defaultViewId = views?.[0]?.id;
   const viewId = useViewId() ?? defaultViewId;
-  const columnMeta = views?.[0]?.columnMeta;
+  const baseId = useBaseId();
   const allFields = useFields({ withHidden: true });
+  const showFields = useFields();
   const record = useRecord(recordId, serverData);
-  const [containerRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const isTouchDevice = useIsTouchDevice();
-  const permission = useTablePermission();
+  const { t } = useTranslation();
+  const tablePermission = useTablePermission();
+  const canUpdateRecord = tablePermission['record|update'];
+
+  const fieldCellReadonly = useCallback(
+    (field: IFieldInstance) => {
+      if (!canUpdateRecord) {
+        return true;
+      }
+
+      return Boolean(record?.isLocked(field.id)) || Boolean(field.isComputed);
+    },
+    [record, canUpdateRecord]
+  );
+
+  const showFieldsId = useMemo(() => new Set(showFields.map((field) => field.id)), [showFields]);
 
   const fields = useMemo(
-    () => (viewId ? allFields.filter((field) => !columnMeta?.[field.id]?.hidden) : []),
-    [allFields, columnMeta, viewId]
+    () => (viewId ? allFields.filter((field) => showFieldsId.has(field.id)) : []),
+    [allFields, showFieldsId, viewId]
   );
 
   const hiddenFields = useMemo(
-    () => (viewId ? allFields.filter((field) => columnMeta?.[field.id]?.hidden) : []),
-    [allFields, columnMeta, viewId]
+    () => (viewId ? allFields.filter((field) => !showFieldsId.has(field.id)) : []),
+    [allFields, showFieldsId, viewId]
   );
 
   const nextRecordIndex = useMemo(() => {
@@ -78,12 +108,18 @@ export const ExpandRecord = (props: IExpandRecordProps) => {
     return recordIds?.length ? recordIds.findIndex((id) => recordId === id) - 1 : -1;
   }, [recordId, recordIds]);
 
-  const onChange = (newValue: unknown, fieldId: string) => {
-    if (isEqual(record?.getCellValue(fieldId), newValue)) {
-      return;
-    }
-    record?.updateCell(fieldId, newValue);
-  };
+  const onChange = useCallback(
+    (newValue: unknown, fieldId: string) => {
+      if (isEqual(record?.getCellValue(fieldId), newValue)) {
+        return;
+      }
+      if (Array.isArray(newValue) && newValue.length === 0) {
+        return record?.updateCell(fieldId, null, { t });
+      }
+      record?.updateCell(fieldId, newValue, { t });
+    },
+    [record, t]
+  );
 
   const onPrevInner = () => {
     if (!recordIds?.length || prevRecordIndex === -1) {
@@ -104,47 +140,64 @@ export const ExpandRecord = (props: IExpandRecordProps) => {
 
   return (
     <ExpandRecordWrap
-      model={isTouchDevice ? IExpandRecordModel.Panel : model ?? IExpandRecordModel.Modal}
+      model={isTouchDevice ? ExpandRecordModel.Drawer : model ?? ExpandRecordModel.Modal}
       visible={visible}
-      showActivity={showActivity}
       onClose={onClose}
+      className={cn({ 'max-w-5xl': commentVisible })}
     >
-      <div ref={containerRef} className="flex h-full flex-col overflow-x-auto">
-        <ExpandRecordHeader
-          title={record?.name}
-          showActivity={showActivity}
-          disabledPrev={disabledPrev}
-          disabledNext={disabledNext}
-          onClose={onClose}
-          onPrev={onPrevInner}
-          onNext={onNextInner}
-          onCopyUrl={onCopyUrl}
-          onShowActivity={onShowActivity}
-        />
-        <div className="relative flex flex-1 overflow-y-hidden">
-          <div className="min-w-[300px] flex-1 overflow-y-auto px-9 pb-9 pt-6">
-            {fields.length > 0 ? (
-              <RecordEditor
-                record={record}
-                fields={fields}
-                hiddenFields={hiddenFields}
-                onChange={onChange}
-                readonly={!permission['record|update']}
-              />
-            ) : (
-              <Skeleton className="h-10 w-full rounded" />
-            )}
-          </div>
+      <div className="flex h-full flex-col">
+        {tableId && recordId && (
+          <ExpandRecordHeader
+            title={record?.title}
+            recordHistoryVisible={recordHistoryVisible}
+            commentVisible={commentVisible}
+            disabledPrev={disabledPrev}
+            disabledNext={disabledNext}
+            onClose={onClose}
+            onPrev={onPrevInner}
+            onNext={onNextInner}
+            onCopyUrl={onCopyUrl}
+            onRecordHistoryToggle={onRecordHistoryToggle}
+            onCommentToggle={onCommentToggle}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            recordId={recordId}
+            tableId={tableId}
+          />
+        )}
+        <div className="relative flex flex-1 overflow-hidden">
+          {recordHistoryVisible ? (
+            <div className="flex size-full overflow-hidden rounded-b bg-background">
+              <RecordHistory recordId={recordId} />
+            </div>
+          ) : (
+            <div className="relative flex w-full flex-1 justify-between overflow-y-auto">
+              {fields.length > 0 ? (
+                <div className="size-full overflow-auto p-9">
+                  <RecordEditor
+                    record={record}
+                    fields={fields}
+                    hiddenFields={hiddenFields}
+                    onChange={onChange}
+                    readonly={fieldCellReadonly}
+                    buttonClickStatusHook={buttonClickStatusHook}
+                    onAttachmentDownload={onAttachmentDownload}
+                  />
+                </div>
+              ) : (
+                <Skeleton className="h-10 w-full rounded" />
+              )}
 
-          {showActivity && (
-            <div
-              className={classNames('flex', {
-                'absolute top-0 right-0 h-full bg-background w-80':
-                  containerWidth <= MIN_SHOW_ACTIVITY_WIDTH,
-              })}
-            >
-              <Separator className="h-full" orientation="vertical" />
-              <ExpandRecordRight />
+              {commentVisible && baseId && tableId && recordId && (
+                <div className="w-[360px] shrink-0">
+                  <CommentPanel
+                    tableId={tableId}
+                    recordId={recordId}
+                    baseId={baseId}
+                    commentId={commentId}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

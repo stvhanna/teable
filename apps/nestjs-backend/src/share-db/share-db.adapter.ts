@@ -1,27 +1,45 @@
-import { Injectable, Logger } from '@nestjs/common';
-import type { IOtOperation, IRecord } from '@teable/core';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type {
+  IFieldPropertyKey,
+  IFieldVo,
+  IOtOperation,
+  IRecord,
+  ISnapshotBase,
+  ITablePropertyKey,
+} from '@teable/core';
 import {
   FieldOpBuilder,
+  getRandomString,
   IdPrefix,
   RecordOpBuilder,
   TableOpBuilder,
-  ViewOpBuilder,
 } from '@teable/core';
-import { PrismaService } from '@teable/db-main-prisma';
-import { Knex } from 'knex';
-import { groupBy } from 'lodash';
-import { InjectModel } from 'nest-knexjs';
+import type { ITableVo } from '@teable/openapi';
+import { omit } from 'lodash';
 import { ClsService } from 'nestjs-cls';
 import type { CreateOp, DeleteOp, EditOp } from 'sharedb';
 import ShareDb from 'sharedb';
 import type { SnapshotMeta } from 'sharedb/lib/sharedb';
 import { FieldService } from '../features/field/field.service';
-import { RecordService } from '../features/record/record.service';
 import { TableService } from '../features/table/table.service';
-import { ViewService } from '../features/view/view.service';
 import type { IClsStore } from '../types/cls';
-import type { IAdapterService } from './interface';
-import { WsAuthService } from './ws-auth.service';
+import { exceptionParse } from '../utils/exception-parse';
+import {
+  RawOpType,
+  type ICreateOp,
+  type IEditOp,
+  type IShareDbReadonlyAdapterService,
+} from './interface';
+import { FieldReadonlyServiceAdapter } from './readonly/field-readonly.service';
+import { RecordReadonlyServiceAdapter } from './readonly/record-readonly.service';
+import { TableReadonlyServiceAdapter } from './readonly/table-readonly.service';
+import { ViewReadonlyServiceAdapter } from './readonly/view-readonly.service';
 
 export interface ICollectionSnapshot {
   type: string;
@@ -39,19 +57,18 @@ export class ShareDbAdapter extends ShareDb.DB {
 
   constructor(
     private readonly cls: ClsService<IClsStore>,
-    private readonly tableService: TableService,
-    private readonly recordService: RecordService,
-    private readonly fieldService: FieldService,
-    private readonly viewService: ViewService,
-    private readonly prismaService: PrismaService,
-    @InjectModel('CUSTOM_KNEX') private readonly knex: Knex,
-    private readonly wsAuthService: WsAuthService
+    private readonly tableService: TableReadonlyServiceAdapter,
+    private readonly recordService: RecordReadonlyServiceAdapter,
+    private readonly fieldService: FieldReadonlyServiceAdapter,
+    private readonly viewService: ViewReadonlyServiceAdapter,
+    private readonly tableServiceInner: TableService,
+    @Optional() private readonly fieldServiceInner?: FieldService
   ) {
     super();
     this.closed = false;
   }
 
-  getService(type: IdPrefix): IAdapterService {
+  getReadonlyService(type: IdPrefix): IShareDbReadonlyAdapterService {
     switch (type) {
       case IdPrefix.View:
         return this.viewService;
@@ -62,7 +79,7 @@ export class ShareDbAdapter extends ShareDb.DB {
       case IdPrefix.Table:
         return this.tableService;
     }
-    throw new Error(`QueryType: ${type} has no service implementation`);
+    throw new Error(`QueryType: ${type} has no readonly adapter service implementation`);
   }
 
   query = async (
@@ -78,15 +95,18 @@ export class ShareDbAdapter extends ShareDb.DB {
         return callback(error, []);
       }
       if (!results.length) {
-        return callback(undefined, []);
+        return callback(undefined, [], extra);
       }
 
       this.getSnapshotBulk(
         collection,
         results as string[],
         projection,
-        undefined,
+        options,
         (error, snapshots) => {
+          if (error) {
+            return callback(error, []);
+          }
           callback(
             error,
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -98,35 +118,47 @@ export class ShareDbAdapter extends ShareDb.DB {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private getAuthHeaders(options: any) {
+    const cookie = options?.cookie || options?.agentCustom?.cookie;
+    const shareId = options?.shareId || options?.agentCustom?.shareId;
+    const baseShareId = options?.baseShareId || options?.agentCustom?.baseShareId;
+    const templateHeader = options?.templateHeader || options?.agentCustom?.templateHeader;
+    if (!cookie && !shareId && !baseShareId && !templateHeader) {
+      this.logger.error(`No cookie found in options agentCustom: ${JSON.stringify(options)}`);
+      throw new UnauthorizedException('Unauthorized request not authorized');
+    }
+    return { cookie, shareViewId: shareId, baseShareId, templateHeader };
+  }
+
   async queryPoll(
     collection: string,
     query: unknown,
-    _options: unknown,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    callback: (error: ShareDb.Error | null, ids: string[], extra?: any) => void
+    options: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    callback: (error: any | null, ids: string[], extra?: any) => void
   ) {
     try {
-      let currentUser = this.cls.get('user');
-      const { sessionTicket } = (query ?? {}) as { sessionTicket?: string };
-
-      if (!currentUser && sessionTicket) {
-        currentUser = await this.wsAuthService.checkSession(sessionTicket);
-      }
-
-      await this.cls.runWith(this.cls.get(), async () => {
-        this.cls.set('user', currentUser);
-
-        const [docType, collectionId] = collection.split('_');
-
-        const queryResult = await this.getService(docType as IdPrefix).getDocIdsByQuery(
-          collectionId,
-          query
-        );
-        callback(null, queryResult.ids, queryResult.extra);
-      });
+      const authHeaders = this.getAuthHeaders(options);
+      await this.cls.runWith(
+        {
+          ...this.cls.get(),
+          ...authHeaders,
+        },
+        async () => {
+          const [docType, collectionId] = collection.split('_');
+          const queryResult = await this.getReadonlyService(docType as IdPrefix).getDocIdsByQuery(
+            collectionId,
+            query
+          );
+          callback(null, queryResult.ids, queryResult.extra);
+        }
+      );
     } catch (e) {
+      this.logger.error(e);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      callback(e as any, []);
+      callback(exceptionParse(e as Error), []);
     }
   }
 
@@ -152,121 +184,8 @@ export class ShareDbAdapter extends ShareDb.DB {
     if (callback) callback();
   }
 
-  private async updateSnapshot(
-    version: number,
-    collection: string,
-    docId: string,
-    ops: IOtOperation[]
-  ) {
-    const [docType, collectionId] = collection.split('_');
-    let opBuilder;
-    switch (docType as IdPrefix) {
-      case IdPrefix.View:
-        opBuilder = ViewOpBuilder;
-        break;
-      case IdPrefix.Field:
-        opBuilder = FieldOpBuilder;
-        break;
-      case IdPrefix.Record:
-        opBuilder = RecordOpBuilder;
-        break;
-      case IdPrefix.Table:
-        opBuilder = TableOpBuilder;
-        break;
-      default:
-        throw new Error(`UpdateSnapshot: ${docType} has no service implementation`);
-    }
-
-    const ops2Contexts = opBuilder.ops2Contexts(ops);
-    const service = this.getService(docType as IdPrefix);
-    // group by op name execute faster
-    const ops2ContextsGrouped = groupBy(ops2Contexts, 'name');
-    for (const opName in ops2ContextsGrouped) {
-      const opContexts = ops2ContextsGrouped[opName];
-      await service.update(version, collectionId, docId, opContexts);
-    }
-  }
-
-  private async createSnapshot(collection: string, _docId: string, snapshot: unknown) {
-    const [docType, collectionId] = collection.split('_');
-    await this.getService(docType as IdPrefix).create(collectionId, snapshot);
-  }
-
-  private async deleteSnapshot(version: number, collection: string, docId: string) {
-    const [docType, collectionId] = collection.split('_');
-    await this.getService(docType as IdPrefix).del(version, collectionId, docId);
-  }
-
-  // Persists an op and snapshot if it is for the next version. Calls back with
-  // callback(err, succeeded)
-  async commit(
-    collection: string,
-    id: string,
-    rawOp: CreateOp | DeleteOp | EditOp,
-    snapshot: ICollectionSnapshot,
-    options: unknown,
-    callback: (err: unknown, succeed?: boolean, complete?: boolean) => void
-  ) {
-    /*
-     * op: CreateOp {
-     *   src: '24545654654646',
-     *   seq: 1,
-     *   v: 0,
-     *   create: { type: 'http://sharejs.org/types/JSONv0', data: { ... } },
-     *   m: { ts: 12333456456 } }
-     * }
-     * snapshot: PostgresSnapshot
-     */
-
-    const [docType, collectionId] = collection.split('_');
-
-    try {
-      await this.prismaService.$tx(async (prisma) => {
-        const opsResult = await prisma.ops.aggregate({
-          _max: { version: true },
-          where: { collection: collectionId, docId: id },
-        });
-
-        if (opsResult._max.version != null) {
-          const maxVersion = opsResult._max.version + 1;
-
-          if (rawOp.v !== maxVersion) {
-            this.logger.log({ message: 'op crashed', crashed: rawOp.op });
-            throw new Error(`${id} version mismatch: maxVersion: ${maxVersion} rawOpV: ${rawOp.v}`);
-          }
-        }
-
-        // 1. save op in db;
-        await prisma.ops.create({
-          data: {
-            docId: id,
-            docType,
-            collection: collectionId,
-            version: rawOp.v,
-            operation: JSON.stringify(rawOp),
-            createdBy: this.cls.get('user.id'),
-          },
-        });
-
-        // create snapshot
-        if (rawOp.create) {
-          await this.createSnapshot(collection, id, rawOp.create.data);
-        }
-
-        // update snapshot
-        if (rawOp.op) {
-          await this.updateSnapshot(snapshot.v, collection, id, rawOp.op);
-        }
-
-        // delete snapshot
-        if (rawOp.del) {
-          await this.deleteSnapshot(snapshot.v, collection, id);
-        }
-      });
-      callback(null, true, true);
-    } catch (err) {
-      callback(err);
-    }
+  async commit() {
+    throw new Error('Method not implemented.');
   }
 
   private snapshots2Map<T>(snapshots: ({ id: string } & T)[]): Record<string, T> {
@@ -283,18 +202,47 @@ export class ShareDbAdapter extends ShareDb.DB {
     collection: string,
     ids: string[],
     projection: IProjection | undefined,
-    options: unknown,
-    callback: (err: ShareDb.Error | null, data?: Record<string, Snapshot>) => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
+    callback: (err: unknown | null, data?: Record<string, Snapshot>) => void
   ) {
     try {
       const [docType, collectionId] = collection.split('_');
 
-      const snapshotData = await this.getService(docType as IdPrefix).getSnapshotBulk(
-        collectionId,
-        ids,
-        projection && projection['$submit'] ? undefined : projection
+      let authHeaders;
+      try {
+        authHeaders = this.getAuthHeaders(options);
+      } catch {
+        // For internal (server-side) connections without auth, resolve field docs directly
+        if (docType === IdPrefix.Field && this.fieldServiceInner) {
+          const snapshotData = await this.fieldServiceInner.getSnapshotBulk(collectionId, ids);
+          if (snapshotData.length) {
+            const snapshots = snapshotData.map(
+              (snapshot) =>
+                new Snapshot(snapshot.id, snapshot.v, snapshot.type, snapshot.data, null)
+            );
+            callback(null, this.snapshots2Map(snapshots));
+          } else {
+            const snapshots = ids.map((id) => new Snapshot(id, 0, null, undefined, null));
+            callback(null, this.snapshots2Map(snapshots));
+          }
+          return;
+        }
+        throw new UnauthorizedException('Unauthorized request not authorized');
+      }
+      const snapshotData = await this.cls.runWith(
+        {
+          ...this.cls.get(),
+          ...authHeaders,
+        },
+        async () => {
+          return this.getReadonlyService(docType as IdPrefix).getSnapshotBulk(
+            collectionId,
+            ids,
+            projection && projection['$submit'] ? undefined : projection
+          );
+        }
       );
-
       if (snapshotData.length) {
         const snapshots = snapshotData.map(
           (snapshot) =>
@@ -312,8 +260,8 @@ export class ShareDbAdapter extends ShareDb.DB {
         callback(null, this.snapshots2Map(snapshots));
       }
     } catch (err) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      callback(err as any);
+      this.logger.error(err);
+      callback(exceptionParse(err as Error));
     }
   }
 
@@ -321,10 +269,11 @@ export class ShareDbAdapter extends ShareDb.DB {
     collection: string,
     id: string,
     projection: IProjection | undefined,
-    options: unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
     callback: (err: unknown, data?: Snapshot) => void
   ) {
-    this.getSnapshotBulk(collection, [id], projection, options, (err, data) => {
+    await this.getSnapshotBulk(collection, [id], projection, options, (err, data) => {
       if (err) {
         callback(err);
       } else {
@@ -332,6 +281,143 @@ export class ShareDbAdapter extends ShareDb.DB {
         callback(null, data![id]);
       }
     });
+  }
+
+  private async getSnapshotData(
+    docType: IdPrefix,
+    collectionId: string,
+    ids: string[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any
+  ) {
+    if (ids.length === 0) {
+      return [];
+    }
+    if (docType === IdPrefix.Table) {
+      return await this.tableServiceInner.getSnapshotBulk(collectionId, ids, {
+        ignoreDefaultViewId: true,
+      });
+    }
+    const authHeaders = this.getAuthHeaders(options);
+    const snapshots = await this.cls.runWith(
+      {
+        ...this.cls.get(),
+        ...authHeaders,
+      },
+      async () => {
+        return await this.getReadonlyService(docType as IdPrefix).getSnapshotBulk(
+          collectionId,
+          ids
+        );
+      }
+    );
+
+    // Filter out meta field for Field type to prevent it from being sent to frontend
+    if (docType === IdPrefix.Field) {
+      return snapshots.map((snapshot) => ({
+        ...snapshot,
+        data: omit(snapshot.data as object, ['meta']),
+      }));
+    }
+
+    return snapshots;
+  }
+
+  private hasGapVersion({
+    opType,
+    currentVersion,
+    fromVersion,
+  }: {
+    opType: RawOpType;
+    currentVersion: number;
+    fromVersion: number;
+  }) {
+    if (opType === RawOpType.Del) {
+      return false;
+    }
+
+    if (fromVersion > currentVersion) {
+      return false;
+    }
+    return true;
+  }
+
+  async internalGetOps(
+    collection: string,
+    id: string,
+    from: number,
+    to: number | null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
+    callback: (error: unknown, data?: unknown) => void,
+    dataFunctions: {
+      getVersionAndType: (
+        collectionId: string,
+        id: string
+      ) => Promise<{ version: number; type: RawOpType }>;
+      getSnapshotData: (
+        docType: IdPrefix,
+        collectionId: string,
+        ids: string[],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        options: any
+      ) => Promise<ISnapshotBase<unknown>[]>;
+    }
+  ) {
+    const { getVersionAndType, getSnapshotData } = dataFunctions;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const [docType, collectionId] = collection.split('_');
+
+      const { version, type } = await getVersionAndType(collectionId, id);
+
+      if (!this.hasGapVersion({ opType: type, currentVersion: version, fromVersion: from })) {
+        callback(null, []);
+        return;
+      }
+
+      const snapshotData = await getSnapshotData(docType as IdPrefix, collectionId, [id], options);
+
+      if (!snapshotData.length) {
+        throw new NotFoundException(`docType: ${docType}, id: ${id} not found`);
+      }
+
+      const { data } = snapshotData[0];
+      const baseRaw = {
+        src: getRandomString(21),
+        seq: 1,
+        v: version,
+      };
+      if (type === RawOpType.Create) {
+        callback(null, [
+          {
+            ...baseRaw,
+            create: {
+              type: 'json0',
+              data,
+            },
+          } as ICreateOp,
+        ]);
+        return;
+      }
+
+      const editOp = this.getOpsFromSnapshot(docType as IdPrefix, data);
+      const gapVersion = Math.max((to || baseRaw.v + 1) - from, 0);
+      const editOps = new Array(gapVersion).fill(0).map((_, i) => {
+        return {
+          ...baseRaw,
+          src: getRandomString(21),
+          v: from + i,
+        } as IEditOp;
+      });
+      if (gapVersion > 0) {
+        editOps[gapVersion - 1].op = editOp;
+      }
+      callback(null, editOps);
+    } catch (err) {
+      this.logger.error(err);
+      callback(exceptionParse(err as Error));
+    }
   }
 
   // Get operations between [from, to) non-inclusively. (Ie, the range should
@@ -347,37 +433,128 @@ export class ShareDbAdapter extends ShareDb.DB {
     collection: string,
     id: string,
     from: number,
-    to: number,
-    options: unknown,
+    to: number | null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
     callback: (error: unknown, data?: unknown) => void
   ) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [_, collectionId] = collection.split('_');
-      const nativeSql = this.knex('ops')
-        .select('operation')
-        .where({
-          collection: collectionId,
-          doc_id: id,
-        })
-        .andWhere('version', '>=', from)
-        .andWhere('version', '<', to)
-        .toSQL()
-        .toNative();
+    const [docType] = collection.split('_');
+    const readonlyService = this.getReadonlyService(docType as IdPrefix);
+    await this.internalGetOps(collection, id, from, to, options, callback, {
+      getVersionAndType: async (...args) => await readonlyService.getVersionAndType(...args),
+      getSnapshotData: async (...args) => await this.getSnapshotData(...args),
+    });
+  }
 
-      const res = await this.prismaService.$queryRawUnsafe<{ operation: string }[]>(
-        nativeSql.sql,
-        ...nativeSql.bindings
-      );
-
-      callback(
-        null,
-        res.map(function (row) {
-          return JSON.parse(row.operation);
+  async getOpsBulk(
+    collection: string,
+    fromMap: Record<string, number>,
+    toMap: Record<string, number | null> | undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
+    callback: (error: unknown, data?: unknown) => void
+  ) {
+    const [docType, collectionId] = collection.split('_');
+    const readonlyService = this.getReadonlyService(docType as IdPrefix);
+    const versionAndTypeMap = await readonlyService.getVersionAndTypeMap(
+      collectionId,
+      Object.keys(fromMap)
+    );
+    const needGetSnapshotDataIds: string[] = [];
+    for (const [id, from] of Object.entries(fromMap)) {
+      const versionAndType = versionAndTypeMap[id];
+      if (!versionAndType) {
+        continue;
+      }
+      if (
+        this.hasGapVersion({
+          opType: versionAndType.type,
+          currentVersion: versionAndType.version,
+          fromVersion: from,
         })
+      ) {
+        needGetSnapshotDataIds.push(id);
+      }
+    }
+
+    const snapshotDataMap = await this.getSnapshotData(
+      docType as IdPrefix,
+      collectionId,
+      needGetSnapshotDataIds,
+      options
+    ).then((snapshots) => {
+      return snapshots.reduce(
+        (acc, snapshot) => {
+          acc[snapshot.id] = snapshot;
+          return acc;
+        },
+        {} as Record<string, ISnapshotBase<unknown>>
       );
-    } catch (err) {
-      callback(err);
+    });
+    const result: Record<string, unknown> = {};
+    for (const [id, from] of Object.entries(fromMap)) {
+      let resultError: unknown = null;
+      await this.internalGetOps(
+        collection,
+        id,
+        from,
+        toMap?.[id] ?? null,
+        options,
+        (err, data) => {
+          if (err) {
+            resultError = err;
+          }
+          result[id] = data;
+        },
+        {
+          getVersionAndType: async (_collectionId, id) =>
+            versionAndTypeMap[id] ?? { version: 0, type: RawOpType.Del },
+          getSnapshotData: async (...args) => {
+            const ids = args[2];
+            return ids.map((id) => snapshotDataMap[id]).filter(Boolean);
+          },
+        }
+      );
+      if (resultError) {
+        callback(resultError);
+        return;
+      }
+    }
+    callback(null, result);
+  }
+
+  private getOpsFromSnapshot(docType: IdPrefix, snapshot: unknown): IOtOperation[] {
+    switch (docType) {
+      case IdPrefix.Record:
+        return Object.entries((snapshot as IRecord).fields).map(([fieldId, fieldValue]) => {
+          return RecordOpBuilder.editor.setRecord.build({
+            fieldId,
+            newCellValue: fieldValue,
+            oldCellValue: undefined,
+          });
+        });
+      case IdPrefix.Field:
+        return Object.entries(snapshot as IFieldVo)
+          .filter(([key]) => key !== 'id')
+          .map(([key, value]) => {
+            return FieldOpBuilder.editor.setFieldProperty.build({
+              key: key as IFieldPropertyKey,
+              newValue: value,
+              oldValue: undefined,
+            });
+          });
+      case IdPrefix.Table:
+        return Object.entries(snapshot as ITableVo)
+          .filter(([key]) => key !== 'id')
+          .map(([key, value]) => {
+            return TableOpBuilder.editor.setTableProperty.build({
+              key: key as ITablePropertyKey,
+              newValue: value,
+              oldValue: undefined,
+            });
+          });
+      default:
+        return [];
     }
   }
 }

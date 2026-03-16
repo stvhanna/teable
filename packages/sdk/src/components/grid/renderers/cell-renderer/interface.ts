@@ -1,4 +1,7 @@
+import type { IButtonFieldCellValue, IButtonFieldOptions } from '@teable/core';
 import type { CSSProperties, ForwardRefRenderFunction } from 'react';
+import type { IButtonClickStatusHook } from '../../../../hooks';
+import type { Record as IRecord } from '../../../../model';
 import type { IEditorProps, IEditorRef } from '../../components';
 import type { IGridTheme } from '../../configs';
 import type { IActiveCellBound, ICellPosition, IRectangle } from '../../interface';
@@ -15,6 +18,7 @@ export enum CellType {
   User = 'User',
   Boolean = 'Boolean',
   Loading = 'Loading',
+  Button = 'Button',
 }
 
 export enum EditorType {
@@ -33,6 +37,8 @@ export interface IBaseCell {
   contentAlign?: 'left' | 'right' | 'center';
   lastUpdated?: string;
   customTheme?: Partial<IGridTheme>;
+  locked?: boolean;
+  hidden?: boolean;
 }
 
 export interface IEditableCell extends IBaseCell {
@@ -105,24 +111,35 @@ export interface IRatingCell extends IEditableCell {
 }
 
 export interface ISelectChoice {
-  id?: string;
+  id: string;
   name: string;
-  bgColor?: string;
-  textColor?: string;
+  color?: string;
+  backgroundColor?: string;
+}
+
+export interface ISelectChoiceSorted {
+  id: string;
+  name: string;
+  [key: string]: unknown;
 }
 
 export interface ISelectCell extends IEditableCell {
   type: CellType.Select;
   data: (string | { title: string; id: string })[];
   displayData: string[];
-  choices?: ISelectChoice[];
+  choiceMap?: Record<string, ISelectChoice>;
+  choiceSorted?: ISelectChoiceSorted[];
   isMultiple?: boolean;
   isEditingOnClick?: boolean;
+  showAddButton?: boolean;
+  onPreview?: (activeId: string) => void;
 }
 
 export interface IImageData {
   id: string;
   url: string;
+  width?: number;
+  height?: number;
 }
 
 export interface IImageCell extends IEditableCell {
@@ -144,6 +161,17 @@ export interface IUserCell extends IEditableCell {
   displayData?: string;
 }
 
+export interface IButtonCell extends IEditableCell {
+  type: CellType.Button;
+  data: {
+    cellValue: IButtonFieldCellValue;
+    fieldOptions: IButtonFieldOptions;
+    tableId: string;
+    statusHook?: IButtonClickStatusHook;
+    record?: IRecord;
+  };
+}
+
 export type IInnerCell =
   | ITextCell
   | ILinkCell
@@ -153,7 +181,8 @@ export type IInnerCell =
   | IRatingCell
   | IBooleanCell
   | IChartCell
-  | IUserCell;
+  | IUserCell
+  | IButtonCell;
 
 export type ICell = IInnerCell | ILoadingCell;
 
@@ -196,6 +225,7 @@ export enum CellRegionType {
   Update = 'update',
   Preview = 'preview',
   ToggleEditing = 'toggleEditing',
+  Hover = 'hover',
 }
 
 export interface ICellRegionWithBlank {
@@ -203,7 +233,12 @@ export interface ICellRegionWithBlank {
 }
 
 export interface ICellRegionWithData {
-  type: CellRegionType.Update | CellRegionType.ToggleEditing | CellRegionType.Preview;
+  type:
+    | CellRegionType.Update
+    | CellRegionType.ToggleEditing
+    | CellRegionType.Preview
+    | CellRegionType.Blank
+    | CellRegionType.Hover;
   data: unknown;
 }
 

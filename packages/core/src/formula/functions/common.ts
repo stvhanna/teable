@@ -1,6 +1,6 @@
 import type { CellValueType } from '../../models/field/constant';
 import type { FieldCore } from '../../models/field/field';
-import type { ITinyRecord } from '../../models/record/record.schema';
+import type { IRecord } from '../../models/record';
 import type { TypedValue } from '../typed-value';
 
 export enum FormulaFuncType {
@@ -13,7 +13,8 @@ export enum FormulaFuncType {
 }
 
 export interface IFormulaContext {
-  record: ITinyRecord;
+  record: IRecord;
+  timeZone: string;
   dependencies: { [fieldId: string]: FieldCore };
 }
 

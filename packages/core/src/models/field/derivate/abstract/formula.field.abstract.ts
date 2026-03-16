@@ -1,12 +1,10 @@
+import { Formula, FormulaErrorListener, FormulaLexer } from '@teable/formula';
+import type { RootContext } from '@teable/formula';
 import { CharStreams, CommonTokenStream } from 'antlr4ts';
 import { z } from 'zod';
 import { assertNever } from '../../../../asserts';
-import { FormulaErrorListener } from '../../../../formula/error.listener';
-import type { RootContext } from '../../../../formula/parser/Formula';
-import { Formula } from '../../../../formula/parser/Formula';
-import { FormulaLexer } from '../../../../formula/parser/FormulaLexer';
 import { EvalVisitor } from '../../../../formula/visitor';
-import type { ITinyRecord } from '../../../record/record.schema';
+import type { IRecord } from '../../../record';
 import { CellValueType } from '../../constant';
 import { FieldCore } from '../../field';
 import type { INumberFormatting, IDatetimeFormatting, IUnionFormatting } from '../../formatting';
@@ -20,6 +18,21 @@ import { booleanCellValueSchema } from '../checkbox.field';
 import { dataFieldCellValueSchema } from '../date.field';
 import { numberCellValueSchema } from '../number.field';
 import { singleLineTextCelValueSchema } from '../single-line-text.field';
+
+export const getFormulaCellValueSchema = (cellValueType: CellValueType) => {
+  switch (cellValueType) {
+    case CellValueType.Number:
+      return numberCellValueSchema;
+    case CellValueType.DateTime:
+      return dataFieldCellValueSchema;
+    case CellValueType.String:
+      return singleLineTextCelValueSchema;
+    case CellValueType.Boolean:
+      return booleanCellValueSchema;
+    default:
+      assertNever(cellValueType);
+  }
+};
 
 export abstract class FormulaAbstractCore extends FieldCore {
   static parse(expression: string) {
@@ -52,7 +65,7 @@ export abstract class FormulaAbstractCore extends FieldCore {
     return this._tree;
   }
 
-  evaluate(dependFieldMap: { [fieldId: string]: FieldCore }, record: ITinyRecord) {
+  evaluate(dependFieldMap: { [fieldId: string]: FieldCore }, record: IRecord) {
     const visitor = new EvalVisitor(dependFieldMap, record);
     return visitor.visit(this.tree);
   }
@@ -98,21 +111,7 @@ export abstract class FormulaAbstractCore extends FieldCore {
   }
 
   validateCellValue(value: unknown) {
-    const getFormulaCellValueSchema = () => {
-      switch (this.cellValueType) {
-        case CellValueType.Number:
-          return numberCellValueSchema;
-        case CellValueType.DateTime:
-          return dataFieldCellValueSchema;
-        case CellValueType.String:
-          return singleLineTextCelValueSchema;
-        case CellValueType.Boolean:
-          return booleanCellValueSchema;
-        default:
-          assertNever(this.cellValueType);
-      }
-    };
-    const schema = getFormulaCellValueSchema();
+    const schema = getFormulaCellValueSchema(this.cellValueType);
 
     if (this.isMultipleCellValue) {
       return z.array(schema).nullable().safeParse(value);

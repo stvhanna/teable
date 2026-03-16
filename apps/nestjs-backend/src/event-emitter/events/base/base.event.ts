@@ -5,8 +5,9 @@ import { CoreEvent } from '../core-event';
 import { Events } from '../event.enum';
 
 type IBaseCreatePayload = { base: ICreateBaseVo };
-type IBaseDeletePayload = { baseId: string };
+type IBaseDeletePayload = { baseId: string; permanent?: boolean };
 type IBaseUpdatePayload = IBaseCreatePayload;
+type IBasePermissionUpdatePayload = { baseId: string };
 
 export class BaseCreateEvent extends CoreEvent<IBaseCreatePayload> {
   public readonly name = Events.BASE_CREATE;
@@ -18,8 +19,8 @@ export class BaseCreateEvent extends CoreEvent<IBaseCreatePayload> {
 
 export class BaseDeleteEvent extends CoreEvent<IBaseDeletePayload> {
   public readonly name = Events.BASE_DELETE;
-  constructor(baseId: string, context: IEventContext) {
-    super({ baseId }, context);
+  constructor(payload: IBaseDeletePayload, context: IEventContext) {
+    super(payload, context);
   }
 }
 
@@ -28,6 +29,14 @@ export class BaseUpdateEvent extends CoreEvent<IBaseUpdatePayload> {
 
   constructor(base: ICreateBaseVo, context: IEventContext) {
     super({ base }, context);
+  }
+}
+
+export class BasePermissionUpdateEvent extends CoreEvent<IBasePermissionUpdatePayload> {
+  public readonly name = Events.BASE_PERMISSION_UPDATE;
+
+  constructor(baseId: string, context: IEventContext) {
+    super({ baseId }, context);
   }
 }
 
@@ -43,12 +52,16 @@ export class BaseEventFactory {
         return new BaseCreateEvent(base, context);
       })
       .with(Events.BASE_DELETE, () => {
-        const { baseId } = payload as IBaseDeletePayload;
-        return new BaseDeleteEvent(baseId, context);
+        const { baseId, permanent } = payload as IBaseDeletePayload;
+        return new BaseDeleteEvent({ baseId, permanent }, context);
       })
       .with(Events.BASE_UPDATE, () => {
         const { base } = payload as IBaseUpdatePayload;
         return new BaseUpdateEvent(base, context);
+      })
+      .with(Events.BASE_PERMISSION_UPDATE, () => {
+        const { baseId } = payload as IBasePermissionUpdatePayload;
+        return new BasePermissionUpdateEvent(baseId, context);
       })
       .otherwise(() => null);
   }

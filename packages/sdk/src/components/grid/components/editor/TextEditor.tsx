@@ -30,7 +30,11 @@ const TextEditorBase: ForwardRefRenderFunction<
 
   const saveValue = () => {
     if (value === displayData || !isEditing) return;
-    onChange?.(type === CellType.Number ? Number(value) : value);
+    if (type === CellType.Number) {
+      onChange?.(Number(value));
+    } else {
+      onChange?.(typeof value === 'string' ? value.trim() : value);
+    }
   };
 
   const onChangeInner = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -51,9 +55,10 @@ const TextEditorBase: ForwardRefRenderFunction<
   const attachStyle = useMemo(() => {
     const style: React.CSSProperties = {
       width: width + 4,
+      minHeight: height + 4,
       height: needWrap ? 'auto' : height + 4,
       marginLeft: -2,
-      marginTop: -2.5,
+      marginTop: -2,
       textAlign: type === CellType.Number ? 'right' : 'left',
     };
     if (height > defaultRowHeight) {
@@ -76,7 +81,7 @@ const TextEditorBase: ForwardRefRenderFunction<
         >
           <AutoSizeTextarea
             ref={inputRef as RefObject<HTMLTextAreaElement>}
-            className="w-full resize-none rounded border-none bg-background px-2 pt-2 text-sm leading-6 focus-visible:outline-none"
+            className="w-full resize-none rounded border-none bg-background px-2 pt-1 text-[13px] leading-[1.4rem] focus-visible:outline-none"
             value={value}
             minRows={2}
             maxRows={5}
@@ -97,7 +102,7 @@ const TextEditorBase: ForwardRefRenderFunction<
             ...attachStyle,
           }}
           value={value}
-          className="cursor-text border-2 px-2 shadow-none focus-visible:ring-transparent"
+          className="cursor-text border-2 text-[13px]"
           onChange={onChangeInner}
           onBlur={saveValue}
           onMouseDown={(e) => e.stopPropagation()}

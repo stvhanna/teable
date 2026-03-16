@@ -17,14 +17,12 @@ import type { INotifyVo, SignatureVo } from '@teable/openapi';
 import { Response, Request } from 'express';
 import { ZodValidationPipe } from '../../zod.validation.pipe';
 import { Public } from '../auth/decorators/public.decorator';
-import { TokenAccess } from '../auth/decorators/token.decorator';
 import { AuthGuard } from '../auth/guard/auth.guard';
 import { AttachmentsService } from './attachments.service';
 import { DynamicAuthGuardFactory } from './guard/auth.guard';
 
 @Controller('api/attachments')
 @Public()
-@TokenAccess()
 export class AttachmentsController {
   constructor(private readonly attachmentsService: AttachmentsService) {}
 
@@ -46,18 +44,28 @@ export class AttachmentsController {
     @Req() req: Request,
     @Param('path') path: string,
     @Query('token') token: string,
-    @Query('filename') filename?: string
+    @Query('response-content-disposition') responseContentDisposition?: string
   ) {
     const hasCache = this.attachmentsService.localFileConditionalCaching(path, req.headers, res);
     if (hasCache) {
       res.status(304);
       return;
     }
-    const { fileStream, headers } = await this.attachmentsService.readLocalFile(
-      path,
-      token,
-      filename
-    );
+    const { fileStream, headers } = await this.attachmentsService.readLocalFile(path, token);
+    if (responseContentDisposition) {
+      const fileNameMatch =
+        responseContentDisposition.match(/filename\*=UTF-8''([^;]+)/) ||
+        responseContentDisposition.match(/filename="?([^"]+)"?/);
+      if (fileNameMatch) {
+        const fileName = fileNameMatch[1] as string;
+        headers['Content-Disposition'] =
+          `attachment; filename*=UTF-8''${encodeURIComponent(fileName)}`;
+      } else {
+        headers['Content-Disposition'] = responseContentDisposition;
+      }
+    }
+    headers['Cross-Origin-Resource-Policy'] = 'unsafe-none';
+    headers['Content-Security-Policy'] = '';
     res.set(headers);
     return new StreamableFile(fileStream);
   }
@@ -72,7 +80,10 @@ export class AttachmentsController {
 
   @UseGuards(AuthGuard, DynamicAuthGuardFactory)
   @Post('/notify/:token')
-  async notify(@Param('token') token: string): Promise<INotifyVo> {
-    return await this.attachmentsService.notify(token);
+  async notify(
+    @Param('token') token: string,
+    @Query('filename') filename?: string
+  ): Promise<INotifyVo> {
+    return await this.attachmentsService.notify(token, filename);
   }
 }

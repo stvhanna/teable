@@ -1,7 +1,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { generateAttachmentId } from '@teable/core';
-import { Pencil, Plus } from '@teable/icons';
+import { Pencil, Plus, Undo2 } from '@teable/icons';
 import type { INotifyVo } from '@teable/openapi';
 import { UploadType } from '@teable/openapi';
 import type { IFile } from '@teable/sdk/components';
@@ -18,13 +18,15 @@ import {
   cn,
 } from '@teable/ui-lib/shadcn';
 import { useTranslation } from 'next-i18next';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FieldOperator } from '@/features/app/components/field-setting';
+import { usePreviewUrl } from '@/features/app/hooks/usePreviewUrl';
 import { tableConfig } from '@/features/i18n/table.config';
 import { useFieldSettingStore } from '../../field/useFieldSettingStore';
 import { FORM_EDITOR_DROPPABLE_ID } from '../constant';
-import { DroppableContainer, SortableItem } from './Drag';
+import { DroppableContainer } from './Drag';
 import { FormFieldEditor } from './FormFieldEditor';
+import { SortableItem } from './SortableItem';
 
 const attachmentManager = new AttachmentManager(2);
 
@@ -36,6 +38,8 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
 
   const coverInput = useRef<HTMLInputElement>(null);
   const logoInput = useRef<HTMLInputElement>(null);
+  const viewRef = useRef(view);
+  viewRef.current = view;
 
   const [name, setName] = useState(view?.name ?? '');
   const [isNameEditing, setNameEditing] = useState(false);
@@ -46,6 +50,19 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
 
   const { setNodeRef } = useDroppable({ id: FORM_EDITOR_DROPPABLE_ID });
   const { t } = useTranslation(tableConfig.i18nNamespaces);
+  const previewUrl = usePreviewUrl();
+
+  useEffect(() => {
+    if (viewRef.current == null) return;
+    const { name = '', description = '', options } = viewRef.current;
+    const { coverUrl = '', logoUrl = '', submitLabel } = options ?? {};
+    setName(name);
+    setNameEditing(false);
+    setDescription(description);
+    setCoverUrl(coverUrl);
+    setLogoUrl(logoUrl);
+    setSubmitLabel(submitLabel);
+  }, [view?.id]);
 
   if (view == null) return null;
 
@@ -83,13 +100,23 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
     const uploadItem = { instance: files[0], id: generateAttachmentId() };
     attachmentManager.upload([uploadItem], UploadType.Form, {
       successCallback: (_file: IFile, attachment: INotifyVo) => {
-        const url = attachment.url;
+        const { path } = attachment;
         const optionProp = isCover ? 'coverUrl' : 'logoUrl';
-        isCover ? setCoverUrl(url) : setLogoUrl(url);
-        view.updateOption({ [optionProp]: url });
+        isCover ? setCoverUrl(path) : setLogoUrl(path);
+        view.updateOption({ [optionProp]: path });
       },
     });
     e.target.value = '';
+  };
+
+  const onCoverReset = async () => {
+    setCoverUrl('');
+    await view.updateOption({ coverUrl: '' });
+  };
+
+  const onLogoReset = async () => {
+    setLogoUrl('');
+    await view.updateOption({ logoUrl: '' });
   };
 
   const onSubmitTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,8 +140,8 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
   };
 
   return (
-    <div className="w-full overflow-y-auto sm:py-8">
-      <div className="relative mx-auto flex w-full max-w-[640px] flex-col items-center overflow-hidden border pb-12 shadow-md sm:rounded-lg">
+    <div className="w-full overflow-y-auto bg-muted sm:py-8">
+      <div className="relative mx-auto flex w-full max-w-screen-sm flex-col items-center overflow-hidden border bg-background pb-12 shadow-md sm:rounded-lg">
         <div
           className={cn(
             'relative h-36 w-full',
@@ -122,38 +149,66 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
               'bg-gradient-to-tr from-green-400 via-blue-400 to-blue-600 dark:from-green-600 dark:via-blue-600 dark:to-blue-900'
           )}
         >
-          {coverUrl && <img src={coverUrl} alt="form cover" className="size-full object-cover" />}
+          {coverUrl && (
+            <img
+              src={previewUrl(coverUrl)}
+              alt="card cover"
+              className="absolute inset-0 size-full object-cover"
+            />
+          )}
           <Button
             variant={'ghost'}
             size={'icon'}
-            className="absolute left-2 top-2 m-1 bg-accent/40 font-normal"
+            className={cn(
+              'absolute right-2 top-2 m-1 bg-accent font-normal',
+              coverUrl && 'right-12'
+            )}
             onClick={() => coverInput.current?.click()}
           >
             <input
               type="file"
               className="hidden"
               ref={coverInput}
+              accept="image/*"
               onChange={(e) => onFileSelected(e, 'cover')}
             />
             <Pencil />
           </Button>
+          {coverUrl && (
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              className="absolute right-2 top-2 m-1 bg-accent font-normal"
+              onClick={onCoverReset}
+            >
+              <Undo2 />
+            </Button>
+          )}
         </div>
 
-        <div className="group absolute left-1/2 top-[104px] ml-[-40px] size-20">
+        <div className="group absolute left-1/2 top-[104px] ml-[-40px] size-20 rounded-lg bg-muted">
           {logoUrl ? (
             <>
               <img
-                src={logoUrl}
-                alt="form logo"
-                className="size-full rounded-lg object-cover shadow-sm"
+                className="absolute inset-0 size-full rounded-lg object-cover shadow-sm"
+                src={previewUrl(logoUrl)}
+                alt="card cover"
               />
               <Button
                 variant={'ghost'}
                 size={'icon'}
-                className="absolute left-0 top-0 size-full font-normal opacity-0 group-hover:opacity-30"
+                className="absolute left-0 top-0 size-full font-normal opacity-0 group-hover:opacity-100 hover:bg-black/50"
                 onClick={() => logoInput.current?.click()}
               >
                 <Pencil className="size-6" />
+              </Button>
+              <Button
+                variant={'ghost'}
+                size={'xs'}
+                className="absolute -right-1 -top-1 size-6 bg-accent font-normal opacity-0 group-hover:opacity-100 "
+                onClick={onLogoReset}
+              >
+                <Undo2 className="size-3" />
               </Button>
             </>
           ) : (
@@ -170,13 +225,14 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
             type="file"
             className="hidden"
             ref={logoInput}
+            accept="image/*"
             onChange={(e) => onFileSelected(e, 'logo')}
           />
         </div>
 
         {isNameEditing ? (
           <Input
-            className="mb-6 mt-16 w-2/3 text-center text-3xl shadow-none"
+            className="mb-6 mt-16 w-2/3 text-center text-3xl"
             value={name}
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
@@ -228,7 +284,7 @@ export const FormEditorMain = (props: { fields: IFieldInstance[] }) => {
                         id={id}
                         index={index}
                         field={field}
-                        className="w-full overflow-hidden rounded-md hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+                        className="w-full overflow-hidden rounded-md hover:bg-accent"
                         draggingClassName="bg-slate-100 dark:bg-slate-800 border border-black border-dashed opacity-50"
                         onClick={() => openSetting({ operator: FieldOperator.Edit, fieldId: id })}
                       >

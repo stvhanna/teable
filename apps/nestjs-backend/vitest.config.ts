@@ -1,36 +1,43 @@
 import swc from 'unplugin-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const testFiles = ['**/src/**/*.{test,spec}.{js,ts}'];
 
 export default defineConfig({
-  plugins: [swc.vite({}), tsconfigPaths()],
+  resolve: {
+    conditions: ['@teable/source'],
+  },
+  ssr: {
+    resolve: {
+      conditions: ['@teable/source'],
+      externalConditions: ['@teable/source'],
+    },
+  },
+  plugins: [
+    swc.vite({
+      jsc: {
+        target: 'es2022',
+      },
+    }),
+    tsconfigPaths(),
+  ],
+  cacheDir: '../../.cache/vitest/nestjs-backend/unit',
   test: {
     globals: true,
     environment: 'node',
     passWithNoTests: true,
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
-    cache: {
-      dir: '../../.cache/vitest/nestjs-backend/unit',
-    },
+    pool: 'forks',
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'clover'],
-      extension: ['js', 'ts'],
-      all: true,
+      reportsDirectory: './coverage/unit',
+      include: ['src/**/*.{js,ts}'],
     },
     include: testFiles,
     exclude: [
+      ...configDefaults.exclude,
       '**/*.controller.spec.ts', // exclude controller test
-      '**/node_modules/**',
-      '**/dist/**',
       '**/.next/**',
-      '**/.{idea,git,cache,output,temp}/**',
     ],
   },
 });

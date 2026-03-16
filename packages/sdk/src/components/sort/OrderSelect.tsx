@@ -1,4 +1,5 @@
-import type { FieldCore, SortFunc } from '@teable/core';
+import { FieldType } from '@teable/core';
+import type { SortFunc } from '@teable/core';
 import { Checked, Square } from '@teable/icons';
 import {
   Select,
@@ -7,6 +8,7 @@ import {
   SelectGroup,
   SelectContent,
   SelectItem,
+  cn,
 } from '@teable/ui-lib';
 import { useMemo } from 'react';
 import { useTranslation } from '../../context/app/i18n';
@@ -16,24 +18,22 @@ interface IOrderProps {
   value: SortFunc;
   fieldId: string;
   onSelect: (value: SortFunc) => void;
+  triggerClassName?: string;
 }
 
 function OrderSelect(props: IOrderProps) {
-  const { value, onSelect, fieldId } = props;
+  const { value, onSelect, fieldId, triggerClassName } = props;
   const { t } = useTranslation();
 
-  const fields = useFields({ withHidden: true });
+  const fields = useFields({ withHidden: true, withDenied: true });
 
   const field = useMemo(() => {
-    const map: Record<string, FieldCore> = {};
-    fields.forEach((field) => {
-      map[field.id] = field;
-    });
-    return map[fieldId];
+    return fields.find((field) => field.id === fieldId);
   }, [fieldId, fields]);
 
   const options = useMemo(() => {
-    const { cellValueType } = field;
+    const cellValueType = field?.cellValueType;
+    const fieldType = field?.type;
 
     const DEFAULTOPTIONS = [
       {
@@ -57,16 +57,16 @@ function OrderSelect(props: IOrderProps) {
       },
     ];
 
-    // const SELECTOPTIONS = [
-    //   {
-    //     value: 'asc',
-    //     label: 'first → last',
-    //   },
-    //   {
-    //     value: 'desc',
-    //     label: 'last → first',
-    //   },
-    // ];
+    const SELECTOPTIONS = [
+      {
+        value: 'asc',
+        label: t('sort.selectASCLabel'),
+      },
+      {
+        value: 'desc',
+        label: t('sort.selectDESCLabel'),
+      },
+    ];
 
     const CHECKBOXOPTIONS = [
       {
@@ -98,6 +98,7 @@ function OrderSelect(props: IOrderProps) {
         option = DEFAULTOPTIONS;
         break;
       case 'number':
+      case 'dateTime':
         option = NUMBEROPTIONS;
         break;
       case 'boolean':
@@ -109,20 +110,19 @@ function OrderSelect(props: IOrderProps) {
     }
 
     /**
-     * todo
      * for select type
      * sort should sort by option's order
      */
-    // if (type === FieldType.SingleSelect || type === FieldType.MultipleSelect) {
-    //   option = SELECTOPTIONS;
-    // }
+    if (fieldType === FieldType.SingleSelect || fieldType === FieldType.MultipleSelect) {
+      option = SELECTOPTIONS;
+    }
 
     return option || DEFAULTOPTIONS;
-  }, [field]);
+  }, [field?.cellValueType, field?.type, t]);
 
   return (
     <Select value={value} onValueChange={onSelect}>
-      <SelectTrigger className="mx-2 h-8 w-32">
+      <SelectTrigger className={cn('mx-2 w-32', triggerClassName)}>
         <SelectValue placeholder={t('common.selectPlaceHolder')} />
       </SelectTrigger>
       <SelectContent>

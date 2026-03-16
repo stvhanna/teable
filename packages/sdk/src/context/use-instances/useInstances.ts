@@ -1,10 +1,10 @@
-import { isEqual } from 'lodash';
-import { useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { IdPrefix, getActionTriggerChannel } from '@teable/core';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import type { Doc, Query } from 'sharedb/lib/client';
-import { useSession } from '../../hooks';
-import { AppContext } from '../app/AppContext';
+import type { Presence } from 'sharedb/lib/sharedb';
+import { useConnection } from '../../hooks/use-connection';
 import { OpListenersManager } from './opListener';
-import type { IInstanceAction } from './reducer';
+import type { IInstanceAction, IInstanceState } from './reducer';
 import { instanceReducer } from './reducer';
 
 export interface IUseInstancesProps<T, R> {
@@ -19,15 +19,120 @@ const queryDestroy = (query: Query | undefined, cb?: () => void) => {
     return;
   }
   if (!query.sent || query.ready) {
-    query?.destroy(cb);
+    query?.destroy(() => {
+      query.removeAllListeners();
+      cb?.();
+      query.results?.forEach((doc) => doc.listenerCount('op batch') === 0 && doc.destroy());
+    });
     return;
   }
   query.once('ready', () => {
     query.destroy(() => {
       query.removeAllListeners();
-      query.results?.forEach((doc) => doc.listenerCount('op') === 0 && doc.destroy());
       cb?.();
+      query.results?.forEach((doc) => doc.listenerCount('op batch') === 0 && doc.destroy());
     });
+  });
+};
+
+// Global cache to dedupe identical subscribe queries across hook instances
+type CachedQuery = { query: Query; refCount: number };
+const subscribeQueryCache = new Map<string, CachedQuery>();
+
+type ActionTriggerPayload = {
+  tableId?: string;
+  fieldIds?: unknown;
+};
+
+type ActionTrigger = {
+  actionKey?: string;
+  payload?: ActionTriggerPayload;
+};
+
+// Normalize query params into a stable, comparable string key
+// - Sort object keys recursively
+// - Convert Set to sorted array
+// - Leave arrays and primitives as-is (arrays keep order)
+// This is intentionally minimal for typical query param shapes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const normalizeForKey = (value: any): any => {
+  if (value == null) return value;
+  if (Array.isArray(value)) return value.map(normalizeForKey);
+  if (value instanceof Set) return Array.from(value).sort();
+  if (value instanceof Map)
+    return Array.from(value.entries())
+      .sort(([a], [b]) => (a > b ? 1 : a < b ? -1 : 0))
+      .map(([k, v]) => [k, normalizeForKey(v)]);
+  if (typeof value === 'object' && value.constructor === Object) {
+    const sortedKeys = Object.keys(value).sort();
+    const res: Record<string, unknown> = {};
+    for (const k of sortedKeys) res[k] = normalizeForKey(value[k]);
+    return res;
+  }
+  return value;
+};
+
+const makeQueryKey = (collection: string, queryParams: unknown, refreshToken = 0) =>
+  `${collection}|${JSON.stringify(normalizeForKey(queryParams))}|refresh:${refreshToken}`;
+
+const acquireQuery = <T>(
+  collection: string,
+  connection: ReturnType<typeof useConnection>['connection'],
+  queryParams: unknown,
+  refreshToken = 0
+) => {
+  const key = makeQueryKey(collection, queryParams, refreshToken);
+  const cached = subscribeQueryCache.get(key);
+  if (cached) {
+    cached.refCount += 1;
+    return { key, query: cached.query };
+  }
+  const query = connection!.createSubscribeQuery<T>(collection, queryParams);
+  subscribeQueryCache.set(key, { query, refCount: 1 });
+  return { key, query };
+};
+
+const releaseQuery = (key?: string, cb?: () => void) => {
+  if (!key) return;
+  const cached = subscribeQueryCache.get(key);
+  if (!cached) return;
+  cached.refCount -= 1;
+  if (cached.refCount <= 0) {
+    subscribeQueryCache.delete(key);
+    queryDestroy(cached.query, cb);
+    return;
+  }
+  cb?.();
+};
+
+const getRecordCollectionTableId = (collection: string): string | undefined => {
+  const [prefix, tableId] = collection.split('_');
+  if (prefix !== IdPrefix.Record || !tableId) {
+    return undefined;
+  }
+  return tableId;
+};
+
+const isSchemaRefreshSetRecordAction = (tableId: string, batch: unknown): boolean => {
+  if (!Array.isArray(batch)) {
+    return false;
+  }
+
+  return batch.some((item) => {
+    if (!(item instanceof Object)) {
+      return false;
+    }
+
+    const action = item as ActionTrigger;
+    if (action.actionKey !== 'setRecord') {
+      return false;
+    }
+
+    if (action.payload?.tableId !== tableId) {
+      return false;
+    }
+
+    return Array.isArray(action.payload?.fieldIds) && action.payload.fieldIds.length > 0;
   });
 };
 
@@ -41,41 +146,72 @@ export function useInstances<T, R extends { id: string }>({
   factory,
   queryParams,
   initData,
-}: IUseInstancesProps<T, R>): R[] {
-  const { connection, connected } = useContext(AppContext);
+}: IUseInstancesProps<T, R>): IInstanceState<R> {
+  const { connection, connected } = useConnection();
+  const recordCollectionTableId = getRecordCollectionTableId(collection);
   const [query, setQuery] = useState<Query<T>>();
+  const [schemaRefreshToken, setSchemaRefreshToken] = useState(0);
+  const currentKeyRef = useRef<string>();
   const [instances, dispatch] = useReducer(
-    (state: R[], action: IInstanceAction<T>) => instanceReducer(state, action, factory),
-    initData && !connected ? initData.map((data) => factory(data)) : []
+    (state: IInstanceState<R>, action: IInstanceAction<T>) =>
+      instanceReducer(state, action, factory),
+    {
+      instances: initData && !connected ? initData.map((data) => factory(data)) : [],
+      extra: undefined,
+    }
   );
-  const { user: sessionUser } = useSession();
-
-  const newQueryParams = useMemo(
-    () => ({
-      ...(queryParams || {}),
-      sessionTicket: (sessionUser as unknown as { _session_ticket?: string })?._session_ticket,
-    }),
-    [queryParams, sessionUser]
-  );
-
   const opListeners = useRef<OpListenersManager<T>>(new OpListenersManager<T>(collection));
   const preQueryRef = useRef<Query<T>>();
+  const lastConnectionRef = useRef<typeof connection>();
+
+  useEffect(() => {
+    if (!connection || !recordCollectionTableId) {
+      return;
+    }
+
+    const presence: Presence = connection.getPresence(
+      getActionTriggerChannel(recordCollectionTableId)
+    );
+    if (!presence.subscribed) {
+      presence.subscribe((error) => {
+        if (error) {
+          console.error('[useInstances] Failed to subscribe schema refresh presence:', error);
+        }
+      });
+    }
+
+    const receiveListener = (_id: string, batch: unknown) => {
+      if (!isSchemaRefreshSetRecordAction(recordCollectionTableId, batch)) {
+        return;
+      }
+      setSchemaRefreshToken((current) => current + 1);
+    };
+
+    presence.addListener('receive', receiveListener);
+
+    return () => {
+      presence.removeListener('receive', receiveListener);
+      if (presence.listenerCount('receive') === 0) {
+        presence.unsubscribe();
+        presence.destroy();
+      }
+    };
+  }, [connection, recordCollectionTableId]);
 
   const handleReady = useCallback((query: Query<T>) => {
     console.log(
       `${query.collection}:ready:`,
-      (() => {
-        const { sessionTicket: _, ...logQuery } = query.query;
-        return logQuery;
-      })()
+      query.query,
+      localStorage.getItem('debug') && query.results.map((doc) => doc.data)
     );
+    console.log('extra ready ->', query.extra);
     if (!query.results) {
       return;
     }
-    dispatch({ type: 'ready', results: query.results });
+    dispatch({ type: 'ready', results: query.results, extra: query.extra });
     query.results.forEach((doc) => {
       opListeners.current.add(doc, (op) => {
-        console.log(`${query.collection} on op:`, op);
+        console.log(`${query.collection} on op:`, op, doc);
         dispatch({ type: 'update', doc });
       });
     });
@@ -119,28 +255,51 @@ export function useInstances<T, R extends { id: string }>({
     dispatch({ type: 'move', docs, from, to });
   }, []);
 
-  useEffect(() => {
-    setQuery((query) => {
-      if (!collection || !connection) {
-        return undefined;
-      }
-      if (query && isEqual(newQueryParams, query.query) && collection === query.collection) {
-        return query;
-      }
-
-      queryDestroy(preQueryRef.current);
-      const newQuery = connection.createSubscribeQuery<T>(collection, newQueryParams);
-      preQueryRef.current = newQuery;
-      return newQuery;
-    });
-  }, [connection, collection, newQueryParams]);
+  const handleExtra = useCallback((extra: unknown) => {
+    console.log('extra', extra);
+    dispatch({ type: 'extra', extra });
+  }, []);
 
   useEffect(() => {
+    if (!collection || !connection) {
+      setQuery(undefined);
+      return;
+    }
+
+    // Compute normalized key and short-circuit if unchanged and connection didn't change
+    const nextKey = makeQueryKey(collection, queryParams, schemaRefreshToken);
+    const connectionChanged = lastConnectionRef.current !== connection;
+    if (!connectionChanged && currentKeyRef.current === nextKey && preQueryRef.current) {
+      // Ensure state holds the existing query instance without re-acquiring
+      setQuery((prev) => prev ?? (preQueryRef.current as Query<T>));
+      return;
+    }
+
+    const previousKey = currentKeyRef.current;
+    if (previousKey && (connectionChanged || previousKey !== nextKey)) {
+      releaseQuery(previousKey, () => opListeners.current.clear());
+    }
+
+    const { key, query } = acquireQuery<T>(collection, connection, queryParams, schemaRefreshToken);
+    currentKeyRef.current = key;
+    preQueryRef.current = query as Query<T>;
+    lastConnectionRef.current = connection;
+    setQuery(query as Query<T>);
+  }, [connection, collection, queryParams, schemaRefreshToken]);
+
+  useEffect(() => {
+    const listeners = opListeners.current;
+    const keyAtMount = currentKeyRef.current;
+    const hasQuery = Boolean(query);
     return () => {
+      // forbid clear query when query is not set but currentKeyRef.current is set
+      if (!hasQuery) {
+        return;
+      }
       // for easy component refresh clean data when switch & loading
       dispatch({ type: 'clear' });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      queryDestroy(query, () => opListeners.current.clear());
+      // release cached query on unmount or when switching queries
+      releaseQuery(keyAtMount, () => listeners.clear());
     };
   }, [query]);
 
@@ -157,6 +316,10 @@ export function useInstances<T, R extends { id: string }>({
       );
     };
 
+    if (query.ready) {
+      readyListener();
+    }
+
     query.on('ready', readyListener);
 
     query.on('changed', changedListener);
@@ -167,14 +330,17 @@ export function useInstances<T, R extends { id: string }>({
 
     query.on('move', handleMove);
 
+    query.on('extra', handleExtra);
+
     return () => {
       query.removeListener('ready', readyListener);
       query.removeListener('changed', changedListener);
       query.removeListener('insert', handleInsert);
       query.removeListener('remove', handleRemove);
       query.removeListener('move', handleMove);
+      query.removeListener('extra', handleExtra);
     };
-  }, [query, handleInsert, handleRemove, handleMove, handleReady]);
+  }, [query, handleInsert, handleRemove, handleMove, handleReady, handleExtra]);
 
   return instances;
 }

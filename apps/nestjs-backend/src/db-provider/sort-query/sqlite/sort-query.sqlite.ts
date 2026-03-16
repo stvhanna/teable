@@ -1,44 +1,47 @@
-import type { IFieldInstance } from '../../../features/field/model/factory';
+import type { FieldCore } from '@teable/core';
+import type { IRecordQuerySortContext } from '../../../features/record/query-builder/record-query-builder.interface';
 import { AbstractSortQuery } from '../sort-query.abstract';
 import { MultipleDateTimeSortAdapter } from './multiple-value/multiple-datetime-sort.adapter';
 import { MultipleJsonSortAdapter } from './multiple-value/multiple-json-sort.adapter';
 import { MultipleNumberSortAdapter } from './multiple-value/multiple-number-sort.adapter';
+import { DateSortAdapter } from './single-value/date-sort.adapter';
 import { JsonSortAdapter } from './single-value/json-sort.adapter';
 import { StringSortAdapter } from './single-value/string-sort.adapter';
 import { SortFunctionSqlite } from './sort-query.function';
 
 export class SortQuerySqlite extends AbstractSortQuery {
-  booleanSort(field: IFieldInstance): SortFunctionSqlite {
-    return new SortFunctionSqlite(this.knex, field);
+  booleanSort(field: FieldCore, context?: IRecordQuerySortContext): SortFunctionSqlite {
+    return new SortFunctionSqlite(this.knex, field, context);
   }
 
-  numberSort(field: IFieldInstance): SortFunctionSqlite {
+  numberSort(field: FieldCore, context?: IRecordQuerySortContext): SortFunctionSqlite {
     const { isMultipleCellValue } = field;
     if (isMultipleCellValue) {
-      return new MultipleNumberSortAdapter(this.knex, field);
+      return new MultipleNumberSortAdapter(this.knex, field, context);
     }
-    return new SortFunctionSqlite(this.knex, field);
-  }
-  dateTimeSort(field: IFieldInstance): SortFunctionSqlite {
-    const { isMultipleCellValue } = field;
-    if (isMultipleCellValue) {
-      return new MultipleDateTimeSortAdapter(this.knex, field);
-    }
-    return new SortFunctionSqlite(this.knex, field);
+    return new SortFunctionSqlite(this.knex, field, context);
   }
 
-  stringSort(field: IFieldInstance): SortFunctionSqlite {
+  dateTimeSort(field: FieldCore, context?: IRecordQuerySortContext): SortFunctionSqlite {
     const { isMultipleCellValue } = field;
     if (isMultipleCellValue) {
-      return new SortFunctionSqlite(this.knex, field);
+      return new MultipleDateTimeSortAdapter(this.knex, field, context);
     }
-    return new StringSortAdapter(this.knex, field);
+    return new DateSortAdapter(this.knex, field, context);
   }
-  jsonSort(field: IFieldInstance): SortFunctionSqlite {
+
+  stringSort(field: FieldCore, context?: IRecordQuerySortContext): SortFunctionSqlite {
     const { isMultipleCellValue } = field;
     if (isMultipleCellValue) {
-      return new MultipleJsonSortAdapter(this.knex, field);
+      return new SortFunctionSqlite(this.knex, field, context);
     }
-    return new JsonSortAdapter(this.knex, field);
+    return new StringSortAdapter(this.knex, field, context);
+  }
+  jsonSort(field: FieldCore, context?: IRecordQuerySortContext): SortFunctionSqlite {
+    const { isMultipleCellValue } = field;
+    if (isMultipleCellValue) {
+      return new MultipleJsonSortAdapter(this.knex, field, context);
+    }
+    return new JsonSortAdapter(this.knex, field, context);
   }
 }

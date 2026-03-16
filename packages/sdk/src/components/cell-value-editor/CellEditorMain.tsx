@@ -1,5 +1,6 @@
 import type {
   IAttachmentCellValue,
+  IButtonFieldCellValue,
   ICheckboxCellValue,
   IDateFieldOptions,
   ILinkCellValue,
@@ -7,9 +8,7 @@ import type {
   ILongTextCellValue,
   IMultipleSelectCellValue,
   INumberCellValue,
-  INumberFieldOptions,
   IRatingFieldOptions,
-  ISelectFieldChoice,
   ISelectFieldOptions,
   ISingleLineTextCellValue,
   ISingleLineTextFieldOptions,
@@ -17,10 +16,12 @@ import type {
   IUserCellValue,
   IUserFieldOptions,
 } from '@teable/core';
-import { ColorUtils, FieldType } from '@teable/core';
+import { FieldType } from '@teable/core';
+import { temporaryPaste } from '@teable/openapi';
 import { useCallback, useEffect, useRef } from 'react';
 import { useTableId } from '../../hooks';
-import { Field } from '../../model';
+import type { ButtonField } from '../../model/field/button.field';
+import { transformSelectOptions } from '../cell-value';
 import {
   AttachmentEditor,
   CheckboxEditor,
@@ -32,12 +33,23 @@ import {
   LongTextEditor,
   LinkEditor,
   UserEditor,
+  ButtonEditor,
 } from '../editor';
 import type { IEditorRef } from '../editor/type';
 import type { ICellValueEditor } from './type';
 
 export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | 'wrapStyle'>) => {
-  const { field, recordId, cellValue, onChange, readonly, className } = props;
+  const {
+    field,
+    recordId,
+    cellValue,
+    onChange,
+    readonly,
+    className,
+    context,
+    buttonClickStatusHook,
+    record,
+  } = props;
   const tableId = useTableId();
   const { id: fieldId, type, options } = field;
   const editorRef = useRef<IEditorRef<unknown>>(null);
@@ -46,35 +58,20 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
     editorRef?.current?.setValue?.(cellValue);
   }, [cellValue]);
 
-  const selectOptions = useCallback((options: ISelectFieldOptions) => {
-    return options.choices.map(({ name, color }) => ({
-      label: name,
-      value: name,
-      color: ColorUtils.shouldUseLightTextOnColor(color) ? '#ffffff' : '#000000',
-      backgroundColor: ColorUtils.getHexForColor(color),
-    }));
-  }, []);
-
   const onOptionAdd = useCallback(
     async (name: string) => {
       if (!tableId) return;
-      if (type !== FieldType.SingleSelect && type !== FieldType.MultipleSelect) return;
 
-      const { choices = [] } = options as ISelectFieldOptions;
-      const existColors = choices.map((v) => v.color);
-      const choice = {
-        name,
-        color: ColorUtils.randomColor(existColors)[0],
-      } as ISelectFieldChoice;
-
-      const newChoices = [...choices, choice];
-
-      await Field.convertField(tableId, fieldId, {
-        type,
-        options: { ...options, choices: newChoices },
+      await temporaryPaste(tableId, {
+        content: name,
+        projection: [fieldId],
+        ranges: [
+          [0, 0],
+          [0, 0],
+        ],
       });
     },
-    [tableId, type, fieldId, options]
+    [tableId, fieldId]
   );
 
   switch (type) {
@@ -106,7 +103,6 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
         <NumberEditor
           ref={editorRef}
           className={className}
-          options={options as INumberFieldOptions}
           value={cellValue as INumberCellValue}
           onChange={onChange}
           readonly={readonly}
@@ -130,7 +126,8 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
           ref={editorRef}
           className={className}
           value={cellValue as ISingleSelectCellValue}
-          options={selectOptions(options as ISelectFieldOptions)}
+          preventAutoNewOptions={(options as ISelectFieldOptions).preventAutoNewOptions}
+          options={transformSelectOptions((options as ISelectFieldOptions).choices)}
           onChange={onChange}
           readonly={readonly}
           onOptionAdd={onOptionAdd}
@@ -143,7 +140,7 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
           ref={editorRef}
           className={className}
           value={cellValue as IMultipleSelectCellValue}
-          options={selectOptions(options as ISelectFieldOptions)}
+          options={transformSelectOptions((options as ISelectFieldOptions).choices)}
           onChange={onChange}
           isMultiple
           readonly={readonly}
@@ -172,16 +169,22 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
           options={options as IDateFieldOptions}
           value={cellValue as string}
           onChange={(selectedDay) => onChange?.(selectedDay ?? null)}
+          readonly={readonly}
         />
       );
     }
     case FieldType.Attachment: {
       return (
         <AttachmentEditor
+          key={`${field.id}-${recordId}`}
           className={className}
+          tableId={tableId}
+          recordId={recordId}
+          fieldId={field.id}
           value={cellValue as IAttachmentCellValue}
           onChange={onChange}
           readonly={readonly}
+          onDownload={props.onAttachmentDownload}
         />
       );
     }
@@ -198,7 +201,9 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
         />
       );
     }
-    case FieldType.User: {
+    case FieldType.User:
+    case FieldType.CreatedBy:
+    case FieldType.LastModifiedBy: {
       return (
         <UserEditor
           className={className}
@@ -206,6 +211,21 @@ export const CellEditorMain = (props: Omit<ICellValueEditor, 'wrapClassName' | '
           options={options as IUserFieldOptions}
           onChange={onChange}
           readonly={readonly}
+          context={context}
+        />
+      );
+    }
+    case FieldType.Button: {
+      return (
+        <ButtonEditor
+          field={field as ButtonField}
+          recordId={recordId}
+          className={className}
+          value={cellValue as IButtonFieldCellValue}
+          onChange={onChange}
+          readonly={readonly}
+          statusHook={buttonClickStatusHook}
+          record={record}
         />
       );
     }

@@ -10,8 +10,8 @@ export class MultipleJsonCellValueFilterAdapter extends CellValueFilterSqlite {
     value: ILiteralValueList
   ): Knex.QueryBuilder {
     const jsonColumn = this.getJsonQueryColumn(this.field, operator);
-    const isOfSql = `exists (select 1 from json_each(??) where ?? = ?)`;
-    builderClient.whereRaw(isOfSql, [this.tableColumnRef, jsonColumn, value]);
+    const isOfSql = `exists (select 1 from json_each(${this.tableColumnRef}) where lower(${jsonColumn}) = lower(?))`;
+    builderClient.whereRaw(isOfSql, [value]);
     return builderClient;
   }
 
@@ -21,8 +21,8 @@ export class MultipleJsonCellValueFilterAdapter extends CellValueFilterSqlite {
     value: ILiteralValueList
   ): Knex.QueryBuilder {
     const jsonColumn = this.getJsonQueryColumn(this.field, operator);
-    const isNotOfSql = `not exists (select 1 from json_each(??) where ?? = ?)`;
-    builderClient.whereRaw(isNotOfSql, [this.tableColumnRef, jsonColumn, value]);
+    const isNotOfSql = `not exists (select 1 from json_each(${this.tableColumnRef}) where lower(${jsonColumn}) = lower(?))`;
+    builderClient.whereRaw(isNotOfSql, [value]);
     return builderClient;
   }
 
@@ -33,13 +33,19 @@ export class MultipleJsonCellValueFilterAdapter extends CellValueFilterSqlite {
   ): Knex.QueryBuilder {
     const jsonColumn = this.getJsonQueryColumn(this.field, operator);
     const isExactlySql = `(
-      select count(distinct json_each.value) from 
+      select count(${jsonColumn}) from 
         json_each(${this.tableColumnRef}) 
       where ${jsonColumn} in (${this.createSqlPlaceholders(value)})
-        and json_array_length(${this.tableColumnRef}) = ?
+    ) >= ?`;
+
+    const isFullMatchSql = `(
+      select count(distinct ${jsonColumn}) from 
+        json_each(${this.tableColumnRef})
     ) = ?`;
-    const vLength = value.length;
-    builderClient.whereRaw(isExactlySql, [...value, vLength, vLength]);
+
+    builderClient
+      .whereRaw(isExactlySql, [...value, value.length])
+      .whereRaw(isFullMatchSql, [value.length]);
     return builderClient;
   }
 
@@ -85,6 +91,25 @@ export class MultipleJsonCellValueFilterAdapter extends CellValueFilterSqlite {
       where ${jsonColumn} in (${this.createSqlPlaceholders(value)})
     ) = ?`;
     builderClient.whereRaw(hasAllSql, [...value, size(value)]);
+    return builderClient;
+  }
+
+  isNotExactlyOperatorHandler(
+    builderClient: Knex.QueryBuilder,
+    operator: IFilterOperator,
+    value: ILiteralValueList
+  ): Knex.QueryBuilder {
+    const jsonColumn = this.getJsonQueryColumn(this.field, operator);
+    const isNotExactlySql = `NOT ((
+      select count(${jsonColumn}) from 
+        json_each(${this.tableColumnRef}) 
+      where ${jsonColumn} in (${this.createSqlPlaceholders(value)})
+    ) >= ? AND (
+      select count(distinct ${jsonColumn}) from 
+        json_each(${this.tableColumnRef})
+    ) = ?)`;
+
+    builderClient.whereRaw(isNotExactlySql, [...value, value.length, value.length]);
     return builderClient;
   }
 

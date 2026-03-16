@@ -1,79 +1,95 @@
-import { ArrowUpRight, Code2, Component, Database, Share2 } from '@teable/icons';
-import { useDriver } from '@teable/sdk/hooks';
-import { Button, Popover, PopoverContent, PopoverTrigger } from '@teable/ui-lib/shadcn';
-import Link from 'next/link';
-import { GUIDE_API_BUTTON } from '@/components/Guide';
-import { DbConnectionPanelTrigger } from '../../db-connection/PanelTrigger';
-import { useCellGraphStore } from '../../graph/useCellGraphStore';
+import { ArrowUpRight, MoreHorizontal } from '@teable/icons';
+import { useIsReadOnlyPreview, useTablePermission } from '@teable/sdk/hooks';
+import { Button, cn, Popover, PopoverContent, PopoverTrigger } from '@teable/ui-lib/shadcn';
+import { SearchButton } from '../search/SearchButton';
+import { PersonalViewSwitch } from './components';
+import { UndoRedoButtons } from './components/UndoRedoButtons';
 import { SharePopover } from './SharePopover';
 import { ToolBarButton } from './ToolBarButton';
 
-export const Others: React.FC = () => {
-  const { toggleGraph } = useCellGraphStore();
-  const driver = useDriver();
+const OthersList = ({
+  classNames,
+  className,
+  foldButton,
+}: {
+  classNames?: { textClassName?: string; buttonClassName?: string };
+  className?: string;
+  foldButton?: boolean;
+}) => {
+  const permission = useTablePermission();
+
+  const { textClassName, buttonClassName } = classNames ?? {};
+
   return (
-    <div className="min-w-[100px] justify-end @container/toolbar-others @2xl/toolbar:flex @2xl/toolbar:flex-1">
+    <div className={cn('gap-1 flex items-center', className)}>
       <SharePopover>
         {(text, isActive) => (
           <ToolBarButton
             isActive={isActive}
             text={text}
-            textClassName="@[234px]/toolbar-others:inline"
+            textClassName={textClassName}
+            className={cn(buttonClassName, { 'w-full justify-start rounded-sm': foldButton })}
+            disabled={!permission['view|update']}
           >
-            <ArrowUpRight className="size-4" />
+            <ArrowUpRight className="size-4 shrink-0" />
           </ToolBarButton>
         )}
       </SharePopover>
+      {!foldButton && <div className="mx-1 h-4 w-px shrink-0 bg-border" />}
+      <PersonalViewSwitch
+        textClassName={textClassName}
+        buttonClassName={cn(buttonClassName, { 'w-full justify-start pl-2': foldButton })}
+      />
+    </div>
+  );
+};
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <ToolBarButton text="Extensions" textClassName="@[234px]/toolbar-others:inline">
-            <Component className="size-4" />
-          </ToolBarButton>
-        </PopoverTrigger>
-        <PopoverContent side="bottom" align="start" className="w-40 p-0">
-          <Button
-            variant={'ghost'}
-            size={'xs'}
-            className="w-full justify-start font-normal"
-            onClick={() => toggleGraph()}
-          >
-            <Share2 className="pr-1 text-lg" />
-            Graph
-          </Button>
-        </PopoverContent>
-      </Popover>
+const OthersMenu = ({ className }: { className?: string }) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant={'ghost'}
+          size={'icon-xs'}
+          className={cn('font-normal shrink-0 truncate', className)}
+        >
+          <MoreHorizontal className="size-4 shrink-0" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="w-40 p-1">
+        <OthersList
+          className="flex w-full flex-col items-start"
+          classNames={{ textClassName: 'inline', buttonClassName: 'justify-start rounded-none' }}
+          foldButton={true}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
 
-      <Popover>
-        <PopoverTrigger asChild>
-          <ToolBarButton
-            text="API"
-            className={GUIDE_API_BUTTON}
-            textClassName="@[234px]/toolbar-others:inline"
-          >
-            <Code2 className="size-4" />
-          </ToolBarButton>
-        </PopoverTrigger>
-        <PopoverContent side="bottom" align="start" className="w-48 p-0">
-          <Button
-            variant={'ghost'}
-            size={'xs'}
-            className="w-full justify-start font-normal"
-            asChild
-          >
-            <Link href="/docs" target="_blank">
-              <Code2 className="size-4" />
-              Restful API
-            </Link>
-          </Button>
-          <DbConnectionPanelTrigger>
-            <Button variant={'ghost'} size={'xs'} className="w-full justify-start font-normal">
-              <Database className="pr-1 text-lg" />
-              <span className="capitalize">{driver}</span>Connection
-            </Button>
-          </DbConnectionPanelTrigger>
-        </PopoverContent>
-      </Popover>
+export const Others: React.FC = () => {
+  const isReadOnlyPreview = useIsReadOnlyPreview();
+  return (
+    <div
+      className={cn(
+        'flex shrink-0 items-center justify-end pl-6 md:gap-0',
+        'bg-[linear-gradient(90deg,rgba(255,255,255,0)_0%,hsl(var(--background))_5%)]',
+        'dark:bg-[linear-gradient(90deg,rgba(0,0,0,0)_0%,hsl(var(--background))_5%)]'
+      )}
+    >
+      <SearchButton className="size-7 shrink-0" />
+      {!isReadOnlyPreview && (
+        <>
+          <div className="mx-1 h-4 w-px shrink-0 bg-border"></div>
+          <UndoRedoButtons />
+          <div className="mx-1 h-4 w-px shrink-0 bg-border"></div>
+          <OthersList
+            className="hidden @md/toolbar:flex"
+            classNames={{ textClassName: '@2xl/toolbar:inline' }}
+          />
+          <OthersMenu className="@md/toolbar:hidden" />
+        </>
+      )}
     </div>
   );
 };

@@ -1,9 +1,9 @@
 import type { OnModuleInit } from '@nestjs/common';
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import type { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import type { ClsService } from 'nestjs-cls';
+import { TimeoutHttpException } from './utils';
 
 interface ITx {
   client?: Prisma.TransactionClient;
@@ -17,22 +17,17 @@ function proxyClient(tx: Prisma.TransactionClient) {
     get(target, p) {
       if (p === '$queryRawUnsafe' || p === '$executeRawUnsafe') {
         return async function (query: string, ...args: unknown[]) {
-          const stack = new Error().stack;
           try {
             return await target[p](query, ...args);
           } catch (e: unknown) {
-            // you can debug here
-            const newError = new Error(
-              `An error occurred in ${p}: ${(e as { message: string }).message}`
-            );
-            newError.stack = stack;
-            throw newError;
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2028') {
+              throw new TimeoutHttpException();
+            }
+            throw e;
           }
         };
       }
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      return target[p];
+      return target[p as keyof typeof target];
     },
   });
 }
@@ -46,30 +41,40 @@ export class PrismaService
 
   private afterTxCb?: () => void;
 
+  // Default transaction options from environment variables
+  // Prisma's built-in defaults: timeout=5000ms, maxWait=2000ms
+  private readonly defaultTxTimeout = Number(process.env.PRISMA_TRANSACTION_TIMEOUT ?? 5000);
+  private readonly defaultTxMaxWait = Number(process.env.PRISMA_TRANSACTION_MAX_WAIT ?? 2000);
+
   constructor(private readonly cls: ClsService<{ tx: ITx }>) {
     const logConfig = {
       log: [
-        {
-          level: 'query',
-          emit: 'event',
-        },
+        // {
+        //   level: 'query',
+        //   emit: 'event',
+        // },
         {
           level: 'error',
           emit: 'stdout',
         },
-        {
-          level: 'info',
-          emit: 'stdout',
-        },
-        {
-          level: 'warn',
-          emit: 'stdout',
-        },
+        // {
+        //   level: 'info',
+        //   emit: 'stdout',
+        // },
+        // {
+        //   level: 'warn',
+        //   emit: 'stdout',
+        // },
       ],
     };
     const initialConfig = process.env.NODE_ENV === 'production' ? {} : { ...logConfig };
 
     super(initialConfig);
+
+    // Log transaction timeout configuration on startup (must be after super())
+    console.log(
+      `[PrismaService] Transaction defaults: timeout=${this.defaultTxTimeout}ms, maxWait=${this.defaultTxMaxWait}ms (from env: PRISMA_TRANSACTION_TIMEOUT=${process.env.PRISMA_TRANSACTION_TIMEOUT}, PRISMA_TRANSACTION_MAX_WAIT=${process.env.PRISMA_TRANSACTION_MAX_WAIT})`
+    );
   }
 
   bindAfterTransaction(fn: () => void) {
@@ -98,18 +103,28 @@ export class PrismaService
       return await fn(txClient);
     }
 
+    // Apply default timeout and maxWait from environment if not explicitly provided
+    const txOptions = {
+      timeout: options?.timeout ?? this.defaultTxTimeout,
+      maxWait: options?.maxWait ?? this.defaultTxMaxWait,
+      ...(options?.isolationLevel && { isolationLevel: options.isolationLevel }),
+    };
+
     await this.cls.runWith(this.cls.get(), async () => {
       result = await super.$transaction<R>(async (prisma) => {
         prisma = proxyClient(prisma);
         this.cls.set('tx.client', prisma);
         this.cls.set('tx.id', nanoid());
         this.cls.set('tx.timeStr', new Date().toISOString());
-        const res = await fn(prisma);
-        this.cls.set('tx.client', undefined);
-        this.cls.set('tx.id', undefined);
-        this.cls.set('tx.timeStr', undefined);
-        return res;
-      }, options);
+        try {
+          // can not delete await here
+          return await fn(prisma);
+        } finally {
+          this.cls.set('tx.client', undefined);
+          this.cls.set('tx.id', undefined);
+          this.cls.set('tx.timeStr', undefined);
+        }
+      }, txOptions);
       this.afterTxCb?.();
     });
 
@@ -140,5 +155,9 @@ export class PrismaService
         Duration: `${e.duration} ms`,
       });
     });
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
   }
 }

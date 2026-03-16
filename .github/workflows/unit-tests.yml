@@ -1,23 +1,28 @@
 name: Unit Tests
 
 on:
+  push:
+    branches:
+      - develop
   pull_request:
     branches:
       - develop
     paths:
-      - 'apps/nestjs-backend/**'
       - 'apps/nextjs-app/**'
       - 'packages/core/**'
       - 'packages/sdk/**'
-
+      - 'packages/openapi/**'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     name: Unit Tests
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.18.0]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,4 +46,4 @@ jobs:
 
       - name: 🧪 Run Tests
         run: |
-          pnpm g:test-unit
+          pnpm -F "!@teable/backend" -r --parralel test-unit

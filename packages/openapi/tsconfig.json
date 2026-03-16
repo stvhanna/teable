@@ -16,12 +16,13 @@
     "declaration": true,
     "declarationDir": "dist",
     "composite": true,
-    "rootDir": "src",
+    "rootDir": "../",
     "outDir": "dist",
     "paths": {
-      "@teable/core": ["../core/src"],
+      "@teable/core": ["../core/src"]
     },
+    "types": ["vitest/globals", "node"]
   },
   "exclude": ["**/node_modules", "**/.*/", "./dist", "./coverage"],
-  "include": ["src"],
+  "include": ["src", "../core/src"]
 }

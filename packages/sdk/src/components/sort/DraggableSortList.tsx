@@ -1,13 +1,7 @@
 import type { ISort, ISortItem } from '@teable/core';
-import { DraggableHandle, Trash2 } from '@teable/icons';
-import { Button } from '@teable/ui-lib';
-import type {
-  DraggableAttributes,
-  SyntheticListenerMap,
-  DragEndEvent,
-} from '@teable/ui-lib/src/base/dnd-kit';
-import { DndKitContext, Droppable, Draggable } from '@teable/ui-lib/src/base/dnd-kit';
-import classNames from 'classnames';
+import { DraggableHandle, Trash } from '@teable/icons';
+import { Button, cn, DndKitContext, Droppable, Draggable } from '@teable/ui-lib';
+import type { DraggableAttributes, SyntheticListenerMap, DragEndEvent } from '@teable/ui-lib';
 import { useIsHydrated } from '../../hooks';
 import { SortItem } from './SortItem';
 import type { ISortItemProps } from './SortItem';
@@ -41,12 +35,17 @@ function DraggableItem(props: IDraggbleProps & ISortItemProps) {
     <>
       <SortItem value={value} index={index} onSelect={onSelect} selectedFields={selectedFields} />
 
-      <Button variant="outline" size="sm" onClick={() => deleteHandler(index)}>
-        <Trash2 className="size-4"></Trash2>
+      <Button
+        variant="ghost"
+        size={'icon'}
+        className="size-8 text-muted-foreground"
+        onClick={() => deleteHandler(index)}
+      >
+        <Trash className="size-4"></Trash>
       </Button>
 
       <div
-        className={classNames('pl-2', displayDragHandler ? null : 'hidden')}
+        className={cn('pl-2', displayDragHandler ? null : 'hidden')}
         {...attributes}
         {...listeners}
       >
@@ -95,10 +94,7 @@ function DraggableSortList(props: IDraggableSortProps) {
                 <div
                   ref={setNodeRef}
                   style={style}
-                  className={classNames(
-                    'flex items-center bg-card my-2 flex-nowrap',
-                    isDragging ? 'opacity-50' : null
-                  )}
+                  className={cn('flex items-center flex-nowrap', isDragging ? 'opacity-50' : null)}
                 >
                   <DraggableItem
                     value={sort}

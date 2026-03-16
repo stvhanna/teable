@@ -5,26 +5,25 @@
       <img alt="teable logo" height="150" src="static/assets/images/teable-vertical-light.png">
     </picture>
   </h1>
-  <h3 align="center"><strong>Postgres-Airtable Fusion</strong></h3>
-  <p>Teable is a Super fast, Real-time, Professional, Developer friendly, No-code database built on Postgres. It uses a simple, spreadsheet-like interface to create complex enterprise-level database applications. Unlock efficient app development with no-code, free from the hurdles of data security and scalability. </p>
+  <h3 align="center"><strong>Manage Your Data & Connect Your Team</strong></h3>
+  <p>Teable uses a simple, spreadsheet-like interface to create powerful database applications. Collaborate with your team in real-time, and scale to millions of rows
+  <p>Try out Teable using our hosted version at <a href="https://teable.ai">teable.ai</a></p>
+</div>
+
+<div align="center">
+<a href="https://trendshift.io/repositories/8516" target="_blank"><img src="https://trendshift.io/api/badge/repositories/8516" alt="teableio%2Fteable | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </div>
 
 <p align="center">
-  <a href="https://teable.io">Home</a> | <a href="https://help.teable.io">Help</a> | <a href="https://Blog.teable.io">Blog</a> | <a href="https://template.teable.io">Template</a> | <a href="https://app.teable.io/share/shr04TEw1u9EOQojPmG/view">Roadmap</a> | <a href="https://discord.gg/n2JQqekG">Discord </a>
+  <a target="_blank" href="https://teable.ai">Home</a> | <a target="_blank" href="https://help.teable.ai">Help</a> | <a target="_blank" href="https://teable.ai/blog">Blog</a> | <a target="_blank" href="https://teable.ai/templates">Template</a> | <a target="_blank" href="https://help.teable.ai/en/api-doc/token">API</a> | <a target="_blank" href="https://community.teable.ai">Community</a> | <a target="_blank" href="https://twitter.com/teableio">Twitter</a>
 </p>
 
 <p align="center">
   <a aria-label="Build" href="https://github.com/teableio/teable/actions?query=Build%20and%20Push%20to%20Docker%20Registry">
     <img alt="build" src="https://img.shields.io/github/actions/workflow/status/teableio/teable/docker-push.yml?label=Build&logo=github&style=flat-quare&labelColor=000000" />
   </a>
-  <a aria-label="Codefactor grade" href="https://www.codefactor.io/repository/github/teableio/teable">
-    <img alt="Codefactor" src="https://img.shields.io/codefactor/grade/github/teableio/teable?label=Codefactor&logo=codefactor&style=flat-quare&labelColor=000000" />
-  </a>
-  <a aria-label="CodeClimate maintainability" href="https://codeclimate.com/github/teableio/teable">
-    <img alt="Maintainability" src="https://img.shields.io/codeclimate/maintainability/teableio/teable?label=Maintainability&logo=code-climate&style=flat-quare&labelColor=000000" />
-  </a>
-  <a aria-label="CodeClimate technical debt" href="https://codeclimate.com/github/teableio/teable">
-    <img alt="Techdebt" src="https://img.shields.io/codeclimate/tech-debt/teableio/teable?label=TechDebt&logo=code-climate&style=flat-quare&labelColor=000000" />
+  <a aria-label="Coverage Status" href="https://coveralls.io/github/teableio/teable?branch=develop">
+    <img alt="Coverage" src="https://coveralls.io/repos/github/teableio/teable/badge.svg?branch=develop" />
   </a>
   <a aria-label="Codacy grade" href="https://www.codacy.com/gh/teableio/teable/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=teableio/teable&amp;utm_campaign=Badge_Grade">
     <img alt="Codacy grade" src="https://img.shields.io/codacy/grade/dff9c944af284a0fad4e165eb1727467?logo=codacy&style=flat-square&labelColor=000&label=Codacy">
@@ -32,11 +31,10 @@
   <a aria-label="Top language" href="https://github.com/teableio/teable/search?l=typescript">
     <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/teableio/teable?style=flat-square&labelColor=000&color=blue">
   </a>
-  <a aria-label="Licence" href="https://github.com/teableio/teable/blob/main/LICENSE">
-    <img alt="Licence" src="https://img.shields.io/github/license/teableio/teable?style=flat-quare&labelColor=000000" />
+  <a aria-label="Gurubase" href="https://gurubase.io/g/teable">
+    <img alt="Gurubase" src="https://img.shields.io/badge/Gurubase-Ask%20Teable%20Guru-006BFF" />
   </a>
 </p>
-
   <h1 align="center">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="static/assets/images/teable-interface-dark.png">
@@ -46,104 +44,68 @@
 
 ## Quick Guide
 
-1. Looking for a quick experience? Select a scenario from the [template center](https://template.teable.io) and click "Use this template".
-2. Seeking high performance? Try the [1 million rows demo](https://app.teable.io/share/shrVgdLiOvNQABtW0yX/view) to feel the speed of Teable.
-3. Want to learn to use it quickly? Click on this [tutorial](https://help.teable.io/quick-start/build-a-simple-base)
-4. Interested in deploying it yourself? Click [Deploy on Railway](https://railway.app/template/wada5e?referralCode=rE4BjB)
+1. Looking for a quick experience? Select a scenario from the [template center](https://app.teable.ai/public/template) and click "Use this template".
+2. Seeking high performance? Try the [1 million rows demo](https://app.teable.ai/share/shrVgdLiOvNQABtW0yX/view) to feel the speed of Teable.
+3. Interested in deploying it yourself? Click [Deploy on Railway](https://railway.app/template/wada5e?referralCode=rE4BjB)
 
 ## ✨Features
 
-#### 📊 Spreadsheet-like interface
+### 🍺 Feature Packed
 
-All you want is here
+Everything you need, right out of the box:
 
-- Cell Editing: Directly click and edit content within cells.
-- Formula Support: Input mathematical and logical formulas to auto-calculate values.
-- Data Sorting and Filtering: Sort data based on a column or multiple columns; use filters to view specific rows of data.
-- Aggregation Function: Automatically summarize statistics for each column, providing instant calculations like sum, average, count, max, and min for streamlined data analysis.
-- Data Formatting: formatting numbers, dates, etc.
-- Grouping: Organize rows into collapsible groups based on column values for easier data analysis and navigation.
-- Freeze Columns: Freeze the left column of the table so they remain visible while scrolling.
-- Import/Export Capabilities: Import and export data from other formats, e.g., .csv, .xlsx.
-- Row Styling & Conditional Formatting: Change row styles automatically based on specific conditions. (coming soon)
-- Charts & Visualization Tools: Create charts from table data such as bar charts, pie charts, line graphs, etc. (coming soon)
-- Data Validation: Limit or validate data that are entered into cells. (coming soon)
-- Undo/Redo: Undo or redo recent changes. (coming soon)
-- Comments & Annotations: Attach comments to rows, providing explanations or feedback for other users. (coming soon)
-- Find & Replace: Search content within the table and replace it with new content. (coming soon)
+- [x] Aggregation
+- [x] Attachments Preview
+- [x] Batch Editing
+- [x] Charts
+- [x] Comments
+- [x] Custom Columns
+- [x] Field Conversion
+- [x] Filtering
+- [x] Formatting
+- [x] Formula Support
+- [x] Grouping
+- [x] History
+- [x] Import/Export
+- [x] Millions of Rows
+- [x] Plugins
+- [x] Real-time
+- [x] Search
+- [x] Sorting
+- [x] SQL Query
+- [x] Undo/Redo
+- [x] Validation
 
-#### 🗂️ Multiple Views
+### 🏞️ Multiple Views
 
 Visualize and interact with data in various ways best suited for their specific tasks.
 
-- Grid View: The default view of the table, which displays data in a spreadsheet-like format.
-- Form View: Input data in a form format, which is useful for collecting data.
-- Kanban View: Displays data in a Kanban board, which is a visual representation of data in columns and cards. (coming soon)
-- Calendar View: Displays data in a calendar format, which is useful for tracking dates and events. (coming soon)
-- Gallery View: Displays data in a gallery format, which is useful for displaying images and other media. (coming soon)
-- Gantt View: Displays data in a Gantt chart, which is useful for tracking project schedules. (coming soon)
-- Timeline View: Displays data in a timeline format, which is useful for tracking events over time. (coming soon)
+- [x] Grid View
+- [x] Form View
+- [x] Kanban View
+- [x] Gallery View
+- [x] Calendar View
 
-#### 🚀 Super Fast
+<table align="center" style="width: 100%;">
+  <tr>
+    <td width="50%"><img alt="Grid View" src="static/assets/images/view-grid.png"></td>
+    <td width="50%"><img alt="Search" src="static/assets/images/search.png"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img alt="Calendar View" src="static/assets/images/view-calendar.png"></td>
+    <td width="50%"><img alt="Gallery View" src="static/assets/images/view-gallery.png"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img alt="Kanban View" src="static/assets/images/view-kanban.png"></td>
+    <td width="50%"><img alt="Form View" src="static/assets/images/view-form.png"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img alt="Comments" src="static/assets/images/comments.png"></td>
+    <td width="50%"><img alt="Record history" src="static/assets/images/record-history.png"></td>
+  </tr>
+</table>
 
-Amazing response speed and data capacity
-
-- Millions of data are easily processed, and there is no pressure to filter and sort
-- Automatic database indexing for maximum speed
-- Supports batch data operations at one time
-
-#### 👨‍💻 Full-featured SQL Support
-
-Seamless integration with the software you are familiar with
-
-- BI tools like Metabase PowerBi...
-- No-code tools like Appsmith...
-- Direct retrieve data with native SQL
-
-#### 🔒 Privacy-First
-
-You own your data, in spite of the cloud
-
-- Bring your own database (coming soon)
-
-#### ⚡️ Real-time collaboration
-
-Designed for teams
-
-- No need to refresh the page, data is updated in real-time
-- Seamlessly integrate collaboration member invitation and management
-- Perfect permission management mechanism, from table to column level
-
-#### 🧩 Extensions (coming soon)
-
-Expand infinite possibilities
-
-- Backend-less programming capability based on React
-- Customize your own application with extremely low cost
-- Extremely easy-to-use script extensions mode
-
-#### 🤖 Automation (coming soon)
-
-Empower data-driven workflows effortlessly and seamlessly
-
-- Design your workflow with AI or Visual programming
-- Super easy to retrieve data from the table
-
-#### 🧠 Copilot (coming soon)
-
-Native Integrated AI ability
-
-- Chat 2 App. "Create a project management app for me"
-- Chat 2 Chart. "Analyze the data in the order table using a bar chart"
-- Chat 2 View. "I want to see the schedule for the past week and only display participants"
-- Chat 2 Action. "After the order is paid and completed, an email notification will be sent to the customer"
-- More actions...
-
-#### 🗄️ Support for multiple databases (coming soon)
-
-Choose the SQL database you like
-
-- Sqlite, PostgreSQL, MySQL, MariaDB, TiDB...
+More features have been added. See our <a target="_blank" href="https://help.teable.ai/en/changelog">Changelog</a>.
 
 ---
 
@@ -153,68 +115,76 @@ Choose the SQL database you like
 
 ```
 .
-├── apps
-│   ├── electron            (desktop, include a electron app )
-│   ├── nextjs-app          (front-end, include a nextjs app)
-│   └── nestjs-backend      (backend, running on server or inside electron app)
-└── packages
-    ├── common-i18n         (locales)
-    ├── core                (share code and interface)
-    ├── sdk                 (sdk for extensions)
-    ├── db-main-prisma      (schema, migrations, prisma client)
-    ├── eslint-config-bases (to shared eslint configs)
-    └── ui-lib              (ui component)
+├── apps (AGPL 3.0)
+│   ├── nextjs-app          (front-end)
+│   └── nestjs-backend      (backend)
+├── packages (MIT)
+│   ├── common-i18n         (locales)
+│   ├── core                (share code and interface)
+│   ├── sdk                 (sdk for extensions)
+│   ├── db-main-prisma      (schema, migrations, prisma client)
+│   ├── eslint-config-bases (to shared eslint configs)
+│   └── ui-lib              (ui component)
+└── plugins (AGPL 3.0)      (custom plugins)
+
 ```
 
 ## Deploy
 
-### Deploy with docker
+### Deploy With Docker
 
 ```sh
 cd dockers/examples/standalone/
 docker-compose up -d
 ```
 
-for more details, see [dockers/examples](dockers/examples)
+for more details, see [install teable](https://help.teable.ai/en/deploy/docker)
 
-### Deploy with Railway
+### One Click Deployment
+
+These platforms are easy to deploy with one click and come with free credits.
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/wada5e?referralCode=rE4BjB)
+
+[![Deploy on Sealos](https://sealos.io/Deploy-on-Sealos.svg)](https://template.sealos.io/deploy?templateName=teable)
+
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/QF8695)
+
+[![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=273)
+
+[![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/teable)
+
+[![Deploy on AlibabaCloud ComputeNest](https://service-info-public.oss-cn-hangzhou.aliyuncs.com/computenest-en.svg)](https://computenest.console.aliyun.com/service/instance/create/default?ServiceName=Teable%20%E7%A4%BE%E5%8C%BA%E7%89%88)
+
 
 ## Development
 
 #### 1. Initialize
 
 ```sh
-# Use `.nvmrc` file to specify node version（Requires pre `nvm` tools）
-nvm install && nvm use
-
 # Enabling the Help Management Package Manager
 corepack enable
 
 # Install project dependencies
 pnpm install
-
-# Build packages
-pnpm g:build
 ```
 
 #### 2. Select Database
 
-we currently support `sqlite` and `postgres`, you can switch between them by running the following command
+we currently support `sqlite` (dev only) and `postgres`, you can switch between them by running the following command
 
 ```sh
 make switch-db-mode
 ```
 
-#### 3. Custom environment variables（optional）
+#### 3. Custom Environment Variables（Optional）
 
 ```sh
 cd apps/nextjs-app
-copy .env.development .env.development.local
+cp .env.development .env.development.local
 ```
 
-#### 4. Run dev server
+#### 4. Run Dev Server
 
 you just need to start backend, it will start next server for frontend automatically, file change will be auto reload
 
@@ -222,6 +192,18 @@ you just need to start backend, it will start next server for frontend automatic
 cd apps/nestjs-backend
 pnpm dev
 ```
+
+By default, the plugin development server is not started. To preview and develop plugins, run:
+```sh
+# build packages
+pnpm build:packages
+
+# start plugin development server
+cd plugins
+pnpm dev
+```
+This will start the plugin development server on port 3002.
+
 
 ## Why Teable?
 
@@ -236,7 +218,7 @@ Giving non-techy people the ability to create their software sounds exciting. Bu
 - Maintaining systems with complex setups can be hard for developers, especially if these aren't built using common software standards.
 - Systems that don't use these standards might need revamping or replacing, costing more in the long run. It might even mean ditching the no-code route and going back to traditional coding.
 
-#### What we think the future of no-code products look like
+#### What We Think the Future Of No-code Products Look Like
 
 - An interface that anyone can use to build applications easily.
 - Easy access to data, letting users grab, move, and reuse their information as they wish.
@@ -248,11 +230,8 @@ Giving non-techy people the ability to create their software sounds exciting. Bu
 
 In essence, Teable isn't just another no-code solution, it's a comprehensive answer to the evolving demands of modern software development, ensuring that everyone, regardless of their technical proficiency, has a platform tailored to their needs.
 
-## Sponsors :heart:
-
-If you are enjoying some this project in your company, I'd really appreciate a [sponsorship](https://github.com/sponsors/teableio), a [coffee](https://ko-fi.com/teable) or a dropped star.
-That gives me some more time to improve it to the next level.
-
 # License
 
-AGPL-3.0
+Teable Community Edition (CE) is free for self-hosting under the AGPL license. See [./LICENSE](./LICENSE) for details.
+
+Teable Enterprise Edition (EE) includes advanced features such as AI, authority matrix, automation and advanced admin. For detailed information and pricing, please visit [pricing](https://app.teable.ai/public/pricing?host=self-hosted&billing=year).

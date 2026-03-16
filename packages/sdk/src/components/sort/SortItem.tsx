@@ -1,6 +1,7 @@
-import type { ISortItem } from '@teable/core';
+import { FieldType, type ISortItem } from '@teable/core';
+import { useFields } from '../../hooks';
+import { FieldSelector } from '../field/FieldSelector';
 import { OrderSelect } from './OrderSelect';
-import { SortFieldSelect } from './SortFieldSelect';
 
 export interface ISortItemProps {
   index: number;
@@ -10,12 +11,12 @@ export interface ISortItemProps {
 }
 
 enum ISortKey {
-  FIELDID = 'fieldId',
-  ASCENDING = 'order',
+  FieldId = 'fieldId',
+  Ascending = 'order',
 }
 
 function SortItem(props: ISortItemProps) {
-  const { index, value, onSelect, ...restProps } = props;
+  const { index, value, onSelect, selectedFields, ...restProps } = props;
 
   const { fieldId, order } = value;
 
@@ -23,17 +24,23 @@ function SortItem(props: ISortItemProps) {
     onSelect?.(index, { ...value, [_key]: _value });
   };
 
+  const defaultFields = useFields({ withHidden: true, withDenied: true });
+  const fields = defaultFields.filter((f) => f.type !== FieldType.Button);
+
   return (
     <div className="flex">
-      <SortFieldSelect
+      <FieldSelector
         value={fieldId}
-        onSelect={(value) => selectHandler(ISortKey.FIELDID, value)}
+        onSelect={(value) => selectHandler(ISortKey.FieldId, value)}
+        fields={fields}
+        excludedIds={selectedFields}
+        className="h-8 w-40"
         {...restProps}
       />
 
       <OrderSelect
         value={order}
-        onSelect={(value) => selectHandler(ISortKey.ASCENDING, value)}
+        onSelect={(value) => selectHandler(ISortKey.Ascending, value)}
         fieldId={fieldId}
       />
     </div>

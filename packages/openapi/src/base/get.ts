@@ -1,19 +1,41 @@
 import type { RouteConfig } from '@asteasolutions/zod-to-openapi';
-import { spaceRolesSchema } from '@teable/core';
+import { roleSchema } from '@teable/core';
 import { axios } from '../axios';
+import { CollaboratorType } from '../space/types';
 import { registerRoute, urlBuilder } from '../utils';
 import { z } from '../zod';
 
 export const GET_BASE = '/base/{baseId}';
 
-export const getBaseVoSchema = z.object({
+export const getBaseItemSchema = z.object({
   id: z.string(),
   name: z.string(),
   spaceId: z.string(),
-  order: z.number(),
   icon: z.string().nullable(),
-  role: spaceRolesSchema,
+  role: roleSchema,
+  collaboratorType: z.enum(CollaboratorType).optional(),
+  restrictedAuthority: z.boolean().optional(),
+  enabledAuthority: z.boolean().optional(),
+  lastModifiedTime: z.string().nullable().optional(),
+  createdTime: z.string().nullable().optional(),
+  createdBy: z.string(),
+  template: z
+    .object({
+      id: z.string(),
+      headers: z.string(),
+    })
+    .optional(),
+  createdUser: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+      avatar: z.string().nullable().optional(),
+    })
+    .optional(),
+  isCanary: z.boolean().optional(),
 });
+
+export const getBaseVoSchema = getBaseItemSchema;
 
 export type IGetBaseVo = z.infer<typeof getBaseVoSchema>;
 

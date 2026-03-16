@@ -1,9 +1,9 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hasPermission } from '@teable/core';
-import { Database } from '@teable/icons';
+import { Check, Database } from '@teable/icons';
 import { duplicateBase, getSpaceList, type IGetBaseVo } from '@teable/openapi';
 import { ReactQueryKeys } from '@teable/sdk/config';
-import { Selector } from '@teable/ui-lib/base';
+import { Spin } from '@teable/ui-lib/base';
 import {
   Button,
   Dialog,
@@ -20,6 +20,7 @@ import { toast } from '@teable/ui-lib/shadcn/ui/sonner';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import { useEffect, useMemo, useState } from 'react';
+import { Selector } from '@/components/Selector';
 import { Emoji } from '@/features/app/components/emoji/Emoji';
 import { spaceConfig } from '@/features/i18n/space.config';
 import { useDuplicateBaseStore } from './useDuplicateBaseStore';
@@ -31,26 +32,34 @@ const DuplicateBase = ({ base }: { base: IGetBaseVo }) => {
   const router = useRouter();
   const { t } = useTranslation(spaceConfig.i18nNamespaces);
   const [baseName, setBaseName] = useState(`${base.name} (${t('space:baseModal.copy')})`);
+  const [successDuplicate, setSuccessDuplicate] = useState(false);
+  const [newBaseId, setNewBaseId] = useState<string>();
 
   const { data: spaceList } = useQuery({
     queryKey: ReactQueryKeys.spaceList(),
-    queryFn: () => getSpaceList(),
+    queryFn: () => getSpaceList().then((res) => res.data),
   });
 
-  const { mutateAsync: duplicateBaseMutator } = useMutation({
+  const queryClient = useQueryClient();
+
+  const { mutateAsync: duplicateBaseMutator, isPending: isLoading } = useMutation({
     mutationFn: duplicateBase,
     onSuccess: ({ data }) => {
-      closeModal();
-      router.push({
-        pathname: '/base/[baseId]',
-        query: { baseId: data.id },
+      targetSpaceId &&
+        queryClient.invalidateQueries({
+          queryKey: ReactQueryKeys.baseList(targetSpaceId),
+        });
+      queryClient.invalidateQueries({
+        queryKey: ReactQueryKeys.baseAll(),
       });
+      setSuccessDuplicate(true);
+      setNewBaseId(data.id);
     },
   });
 
   const editableSpaceList = useMemo(() => {
-    return spaceList?.data.filter((space) => hasPermission(space.role, 'base|create')) || [];
-  }, [spaceList?.data]);
+    return spaceList?.filter((space) => hasPermission(space.role, 'base|create')) || [];
+  }, [spaceList]);
 
   const onSubmit = () => {
     if (!targetSpaceId) {
@@ -58,7 +67,7 @@ const DuplicateBase = ({ base }: { base: IGetBaseVo }) => {
       return;
     }
 
-    toast.message(t('space:baseModal.copying'));
+    // toast.message(t('space:baseModal.copying'));
 
     duplicateBaseMutator({
       fromBaseId: base.id,
@@ -89,11 +98,11 @@ const DuplicateBase = ({ base }: { base: IGetBaseVo }) => {
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 py-4">
         {base.icon ? (
-          <div className="size-14 min-w-[3.5rem] text-[3.5rem] leading-none">
+          <div className="size-14 min-w-14 text-[3.5rem] leading-none">
             <Emoji emoji={base.icon} size={56} />
           </div>
         ) : (
-          <Database className="size-14 min-w-[3.5rem]" />
+          <Database className="size-14 min-w-14" />
         )}
         <div>
           <Input value={baseName} onChange={(e) => setBaseName(e.target.value)} />
@@ -129,8 +138,29 @@ const DuplicateBase = ({ base }: { base: IGetBaseVo }) => {
             {t('common:actions.cancel')}
           </Button>
         </DialogClose>
-        <Button size="sm" type="submit" onClick={() => onSubmit()}>
-          {t('space:baseModal.duplicateBase')}
+        <Button
+          size="sm"
+          type="submit"
+          onClick={() => {
+            if (successDuplicate && newBaseId) {
+              closeModal();
+              router.push({
+                pathname: '/base/[baseId]',
+                query: { baseId: newBaseId },
+              });
+            } else {
+              onSubmit();
+            }
+          }}
+          className="flex items-center gap-2"
+        >
+          {successDuplicate
+            ? t('space:baseModal.duplicateBaseSucceedAndJump')
+            : t('space:baseModal.duplicateBase')}
+
+          {successDuplicate && <Check className="size-3 text-green-300" />}
+
+          {isLoading && <Spin className="size-4" />}
         </Button>
       </DialogFooter>
     </DialogContent>

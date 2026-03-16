@@ -1,16 +1,26 @@
-import type { DriverClient } from '@teable/core';
+import { ANONYMOUS_USER_ID, type DriverClient } from '@teable/core';
 import type { ShareViewGetVo } from '@teable/openapi';
-import { AnchorContext, AppProvider, FieldProvider, ViewProvider } from '@teable/sdk/context';
+import {
+  AnchorContext,
+  AppProvider,
+  FieldProvider,
+  SessionProvider,
+  ShareViewProxy,
+  ViewProvider,
+  ShareViewContext,
+} from '@teable/sdk/context';
 import { getWsPath } from '@teable/sdk/context/app/useConnection';
+import { addQueryParamsToWebSocketUrl } from '@teable/sdk/utils';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
+import { useTranslation } from 'next-i18next';
 import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useAutoFavicon } from '@/features/app/hooks/useAutoFavicon';
+import { useBrand } from '@/features/app/hooks/useBrand';
 import { useSdkLocale } from '@/features/app/hooks/useSdkLocale';
 import { AppLayout } from '@/features/app/layouts';
-import { addQueryParamsToWebSocketUrl } from '@/features/app/utils/socket-url';
+import { ShareTablePermissionProvider } from './ShareTablePermissionProvider';
 import { ShareView } from './ShareView';
-import { ShareViewPageContext } from './ShareViewPageContext';
-import { ViewProxy } from './ViewProxy';
 
 export interface IShareViewPageProps {
   shareViewData: ShareViewGetVo;
@@ -22,6 +32,10 @@ export const ShareViewPage = (props: IShareViewPageProps) => {
   const sdkLocale = useSdkLocale();
   const { i18n } = useTranslation();
 
+  const { query } = useRouter();
+  const { brandName } = useBrand();
+  useAutoFavicon();
+
   const wsPath = useMemo(() => {
     if (typeof window === 'object') {
       return addQueryParamsToWebSocketUrl(getWsPath(), { shareId });
@@ -30,28 +44,49 @@ export const ShareViewPage = (props: IShareViewPageProps) => {
   }, [shareId]);
 
   return (
-    <ShareViewPageContext.Provider value={props.shareViewData}>
-      <Head>
-        <title>{view?.name ?? 'Teable'}</title>
-      </Head>
-      <AppLayout>
-        <AppProvider lang={i18n.language} wsPath={wsPath} locale={sdkLocale} driver={props.driver}>
-          <AnchorContext.Provider
-            value={{
-              tableId,
-              viewId,
+    <AppProvider
+      lang={i18n.language}
+      wsPath={wsPath}
+      locale={sdkLocale}
+      forcedTheme={query.theme as string}
+    >
+      <ShareViewContext.Provider value={props.shareViewData}>
+        <Head>
+          <title>{view?.name ? `${view.name} - ${brandName}` : brandName}</title>
+        </Head>
+        <AppLayout>
+          <SessionProvider
+            user={{
+              id: ANONYMOUS_USER_ID,
+              name: ANONYMOUS_USER_ID,
+              email: '',
+              notifyMeta: {},
+              hasPassword: false,
+              isAdmin: false,
             }}
+            disabledApi
           >
-            <ViewProvider serverData={[view]}>
-              <ViewProxy serverData={[view]}>
-                <FieldProvider serverSideData={fields}>
-                  <ShareView />
-                </FieldProvider>
-              </ViewProxy>
-            </ViewProvider>
-          </AnchorContext.Provider>
-        </AppProvider>
-      </AppLayout>
-    </ShareViewPageContext.Provider>
+            <AnchorContext.Provider
+              value={{
+                tableId,
+                viewId,
+              }}
+            >
+              {view && (
+                <ViewProvider serverData={[view]}>
+                  <ShareViewProxy serverData={[view]}>
+                    <FieldProvider serverSideData={fields}>
+                      <ShareTablePermissionProvider>
+                        <ShareView />
+                      </ShareTablePermissionProvider>
+                    </FieldProvider>
+                  </ShareViewProxy>
+                </ViewProvider>
+              )}
+            </AnchorContext.Provider>
+          </SessionProvider>
+        </AppLayout>
+      </ShareViewContext.Provider>
+    </AppProvider>
   );
 };
